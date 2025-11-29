@@ -1,7 +1,7 @@
 
 from app.database import Base, engine  # type: ignore[import]
 from app.models import admin  # noqa: F401  # ensure Admin model is imported
-
+from app.models import course  # noqa: F401  # ensure Course model is imported
 
 def init_db() -> None:
     """
