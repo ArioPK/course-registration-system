@@ -2,7 +2,10 @@
 
 from fastapi import FastAPI # type: ignore
 
-from .config.settings import settings  # relative import from app.config
+from .config.settings import settings
+from .views import db_debug  # new import to check if db works perfectly fine before commit 
+
+
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -19,8 +22,5 @@ def health_check():
     return {"status": "ok"}
 
 
-# Optional: basic startup log using settings
-@app.on_event("startup")
-async def on_startup() -> None:
-    # In a real project you'd use logging instead of print()
-    print(f"Starting {settings.APP_NAME} (debug={settings.DEBUG})")
+#db test router . delete later
+app.include_router(db_debug.router)
