@@ -629,6 +629,47 @@
     line-height: 1.6;
   }
   
+  /*-------------------------
+      Form Validation Styles
+  -------------------------*/
+  .form-group input.input-error,
+  .form-group textarea.input-error {
+    border-color: var(--danger);
+    background: rgba(229, 57, 53, 0.1);
+  }
+  
+  .form-group input.input-error:focus,
+  .form-group textarea.input-error:focus {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.2);
+  }
+  
+  .field-error {
+    display: block;
+    color: var(--danger-light);
+    font-size: 0.85rem;
+    margin-top: 5px;
+    text-align: right;
+    animation: fadeIn 0.3s ease;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-5px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .save-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
   .modal-actions {
     margin-top: 30px;
     display: flex;

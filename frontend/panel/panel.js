@@ -12,6 +12,22 @@
       }
 
     const AdminCourseApp = {
+      // --- API Configuration ---
+      API_CONFIG: {
+        // Set to true to use mock API (for development)
+        // Set to false to use real API endpoint
+        USE_MOCK: true, // Set to false when backend is ready
+        // Your actual API base URL
+        BASE_URL: "http://localhost:8000", // Change this to your backend URL
+        // API endpoints
+        ENDPOINTS: {
+          COURSES: "/api/courses",
+          COURSE_BY_ID: (id) => `/api/courses/${id}`,
+        },
+        // Request timeout in milliseconds
+        TIMEOUT: 10000,
+      },
+
       // --- App State & Elements ---
       elements: {},
       state: {
@@ -77,18 +93,34 @@
        */
       async loadInitialData() {
         try {
+          console.log("Loading initial course data...");
           const courses = await this.api.getCourses();
+          
+          // Ensure courses is an array
+          if (!Array.isArray(courses)) {
+            console.error("Invalid courses data format:", courses);
+            this.data.courses = [];
+            alert("خطا: فرمت داده دریافتی از سرور نامعتبر است.");
+            return;
+          }
+          
           this.data.courses = courses;
+          console.log(`Loaded ${courses.length} courses from API`);
           
           // Extract unique departments and semesters
-          this.data.departments = [...new Set(courses.map(c => c.department))];
-          this.data.semesters = [...new Set(courses.map(c => c.semester))];
+          this.data.departments = [...new Set(courses.map(c => c.department).filter(Boolean))];
+          this.data.semesters = [...new Set(courses.map(c => c.semester).filter(Boolean))];
           
           // Populate filter dropdowns
           this.populateFilters();
         } catch (error) {
           console.error("Failed to load initial data:", error);
-          alert("خطا در بارگذاری اطلاعات اولیه.");
+          const errorMessage = error.message || "خطا در بارگذاری اطلاعات اولیه.";
+          alert(errorMessage);
+          // Set empty data to prevent further errors
+          this.data.courses = [];
+          this.data.departments = [];
+          this.data.semesters = [];
         }
       },
 
@@ -335,6 +367,10 @@
           AdminCourseApp.state.currentEditId = null;
           AdminCourseApp.elements.courseForm.reset();
           AdminCourseApp.elements.courseModalTitle.textContent = "افزودن درس جدید";
+          
+          // Clear any previous validation errors
+          AdminCourseApp.ui.clearFormValidation();
+          
           AdminCourseApp.ui.openModal(AdminCourseApp.elements.courseModal);
         },
 
@@ -384,6 +420,10 @@
         async onCourseFormSubmit(e) {
           e.preventDefault();
           
+          // Clear previous validation errors
+          AdminCourseApp.ui.clearFormValidation();
+          
+          // Get form values
           const formData = {
             code: AdminCourseApp.elements.courseCode.value.trim(),
             name: AdminCourseApp.elements.courseName.value.trim(),
@@ -393,38 +433,58 @@
             capacity: parseInt(AdminCourseApp.elements.courseCapacity.value),
           };
 
-          // Validation
-          if (!formData.code || !formData.name || !formData.units || !formData.department || !formData.semester || !formData.capacity) {
-            alert("لطفاً تمام فیلدها را پر کنید.");
+          // Comprehensive validation with field-level error messages
+          const validationErrors = AdminCourseApp.ui.validateForm(formData);
+          
+          if (validationErrors.length > 0) {
+            console.log("Validation errors:", validationErrors);
+            AdminCourseApp.ui.showFormValidationErrors(validationErrors);
             return;
           }
+          
+          console.log("Form validation passed. Submitting...", formData);
 
-          if (formData.units < 1 || formData.units > 6) {
-            alert("تعداد واحد باید بین 1 تا 6 باشد.");
-            return;
-          }
-
-          if (formData.capacity < 1) {
-            alert("ظرفیت باید بیشتر از 0 باشد.");
-            return;
-          }
+          // Disable submit button to prevent double submission
+          const submitButton = AdminCourseApp.elements.courseForm.querySelector('button[type="submit"]');
+          const originalButtonText = submitButton.textContent;
+          submitButton.disabled = true;
+          submitButton.textContent = "در حال ذخیره...";
 
           try {
+            let result;
             if (AdminCourseApp.state.currentEditId) {
               // Update existing course
-              await AdminCourseApp.api.updateCourse(AdminCourseApp.state.currentEditId, formData);
+              console.log("Updating course:", AdminCourseApp.state.currentEditId, formData);
+              result = await AdminCourseApp.api.updateCourse(AdminCourseApp.state.currentEditId, formData);
             } else {
               // Add new course
-              await AdminCourseApp.api.addCourse(formData);
+              console.log("Adding new course:", formData);
+              result = await AdminCourseApp.api.addCourse(formData);
             }
             
+            console.log("Course saved successfully:", result);
+            
+            // Clear form and close modal
+            AdminCourseApp.elements.courseForm.reset();
+            AdminCourseApp.state.currentEditId = null;
+            AdminCourseApp.ui.closeModal(AdminCourseApp.elements.courseModal);
+            
+            // Reload data and refresh UI
             await AdminCourseApp.loadInitialData();
             AdminCourseApp.renderAll();
             AdminCourseApp.updateSummary();
-            AdminCourseApp.ui.closeModal(AdminCourseApp.elements.courseModal);
+            
+            // Show success message
+            alert("درس با موفقیت ذخیره شد.");
           } catch (error) {
-            console.error("Failed to save course:", error);
-            alert("خطا در ذخیره‌سازی درس.");
+            console.error("Failed to save course - Full error:", error);
+            console.error("Error stack:", error.stack);
+            const errorMessage = error.message || "خطا در ذخیره‌سازی درس.";
+            alert(`خطا: ${errorMessage}\n\nلطفاً Console را بررسی کنید (F12)`);
+          } finally {
+            // Re-enable submit button
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
           }
         },
 
@@ -445,7 +505,128 @@
       //==================================================================
       ui: {
         openModal: (modal) => modal.classList.add("active"),
-        closeModal: (modal) => modal.classList.remove("active"),
+        closeModal: (modal) => {
+          modal.classList.remove("active");
+          // Clear form when closing modal
+          if (modal.id === "course-modal") {
+            AdminCourseApp.elements.courseForm.reset();
+            AdminCourseApp.state.currentEditId = null;
+            AdminCourseApp.ui.clearFormValidation();
+          }
+        },
+        
+        /**
+         * Validates form data and returns array of errors
+         */
+        validateForm(formData) {
+          const errors = [];
+          
+          // Code validation
+          if (!formData.code) {
+            errors.push({ field: "course-code", message: "کد درس الزامی است." });
+          } else if (formData.code.length < 2) {
+            errors.push({ field: "course-code", message: "کد درس باید حداقل 2 کاراکتر باشد." });
+          } else if (!/^[A-Z0-9]+$/i.test(formData.code)) {
+            errors.push({ field: "course-code", message: "کد درس فقط می‌تواند شامل حروف و اعداد باشد." });
+          } else {
+            // Check for duplicate course code (only if courses data is loaded)
+            if (AdminCourseApp.data.courses && Array.isArray(AdminCourseApp.data.courses)) {
+              const existingCourse = AdminCourseApp.data.courses.find(
+                course => course && course.code && 
+                         course.code.toLowerCase() === formData.code.toLowerCase() &&
+                         course.id !== AdminCourseApp.state.currentEditId
+              );
+              if (existingCourse) {
+                errors.push({ field: "course-code", message: `کد درس "${formData.code}" قبلاً استفاده شده است.` });
+              }
+            }
+          }
+          
+          // Name validation
+          if (!formData.name) {
+            errors.push({ field: "course-name", message: "نام درس الزامی است." });
+          } else if (formData.name.length < 3) {
+            errors.push({ field: "course-name", message: "نام درس باید حداقل 3 کاراکتر باشد." });
+          }
+          
+          // Units validation
+          if (!formData.units || isNaN(formData.units)) {
+            errors.push({ field: "course-units", message: "تعداد واحد الزامی است." });
+          } else if (formData.units < 1 || formData.units > 6) {
+            errors.push({ field: "course-units", message: "تعداد واحد باید بین 1 تا 6 باشد." });
+          }
+          
+          // Department validation
+          if (!formData.department) {
+            errors.push({ field: "course-department", message: "رشته الزامی است." });
+          } else if (formData.department.length < 2) {
+            errors.push({ field: "course-department", message: "نام رشته باید حداقل 2 کاراکتر باشد." });
+          }
+          
+          // Semester validation (more flexible format)
+          if (!formData.semester) {
+            errors.push({ field: "course-semester", message: "ترم الزامی است." });
+          } else if (formData.semester.length < 3) {
+            errors.push({ field: "course-semester", message: "فرمت ترم صحیح نیست. مثال: 1403-1" });
+          }
+          
+          // Capacity validation
+          if (!formData.capacity || isNaN(formData.capacity)) {
+            errors.push({ field: "course-capacity", message: "ظرفیت الزامی است." });
+          } else if (formData.capacity < 1) {
+            errors.push({ field: "course-capacity", message: "ظرفیت باید بیشتر از 0 باشد." });
+          } else if (formData.capacity > 1000) {
+            errors.push({ field: "course-capacity", message: "ظرفیت نمی‌تواند بیشتر از 1000 باشد." });
+          }
+          
+          return errors;
+        },
+        
+        /**
+         * Shows validation errors in the form
+         */
+        showFormValidationErrors(errors) {
+          errors.forEach(error => {
+            const field = document.getElementById(error.field);
+            if (field) {
+              field.classList.add("input-error");
+              
+              // Remove existing error message
+              const formGroup = field.closest(".form-group");
+              const existingError = formGroup.querySelector(".field-error");
+              if (existingError) {
+                existingError.remove();
+              }
+              
+              // Add new error message
+              const errorElement = document.createElement("span");
+              errorElement.className = "field-error";
+              errorElement.textContent = error.message;
+              formGroup.appendChild(errorElement);
+            }
+          });
+          
+          // Focus on first error field
+          if (errors.length > 0) {
+            const firstErrorField = document.getElementById(errors[0].field);
+            if (firstErrorField) {
+              firstErrorField.focus();
+            }
+          }
+        },
+        
+        /**
+         * Clears all validation errors from the form
+         */
+        clearFormValidation() {
+          const form = AdminCourseApp.elements.courseForm;
+          const errorFields = form.querySelectorAll(".input-error");
+          errorFields.forEach(field => field.classList.remove("input-error"));
+          
+          const errorMessages = form.querySelectorAll(".field-error");
+          errorMessages.forEach(msg => msg.remove());
+        },
+        
         showConfirmation(message, onConfirm) {
           const confirmModal = AdminCourseApp.elements.confirmationModal;
           confirmModal.querySelector("#confirmation-message").textContent = message;
@@ -473,10 +654,106 @@
       },
 
       //==================================================================
-      // SECTION 6: API SIMULATION
+      // SECTION 6: API INTEGRATION
       //==================================================================
       api: {
-        // Mock database
+        /**
+         * Gets authentication token from sessionStorage
+         */
+        _getAuthToken() {
+          return sessionStorage.getItem("authToken");
+        },
+
+        /**
+         * Gets headers for API requests with authentication
+         */
+        _getHeaders() {
+          const headers = {
+            "Content-Type": "application/json",
+          };
+          const token = this._getAuthToken();
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+          return headers;
+        },
+
+        /**
+         * Makes HTTP request with error handling
+         * Handles FastAPI error responses and standard HTTP errors
+         */
+        async _request(url, options = {}) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), AdminCourseApp.API_CONFIG.TIMEOUT);
+
+          try {
+            const response = await fetch(url, {
+              ...options,
+              headers: {
+                ...this._getHeaders(),
+                ...options.headers,
+              },
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            // Handle non-OK responses
+            if (!response.ok) {
+              let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+              
+              try {
+                const errorData = await response.json();
+                // FastAPI typically returns errors in 'detail' field
+                if (errorData.detail) {
+                  errorMessage = Array.isArray(errorData.detail) 
+                    ? errorData.detail.map(e => e.msg || e.message || JSON.stringify(e)).join(", ")
+                    : errorData.detail;
+                } else if (errorData.message) {
+                  errorMessage = errorData.message;
+                } else if (typeof errorData === 'string') {
+                  errorMessage = errorData;
+                }
+              } catch (e) {
+                // If response is not JSON, try to get text
+                try {
+                  const text = await response.text();
+                  if (text) errorMessage = text;
+                } catch (e2) {
+                  // Keep default error message
+                }
+              }
+              
+              throw new Error(errorMessage);
+            }
+
+            // Handle empty responses (204 No Content)
+            if (response.status === 204 || response.headers.get("content-length") === "0") {
+              return { success: true };
+            }
+
+            // Parse JSON response
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.includes("application/json")) {
+              return await response.json();
+            } else {
+              // If not JSON, return text
+              const text = await response.text();
+              return text ? JSON.parse(text) : { success: true };
+            }
+          } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === "AbortError") {
+              throw new Error("Request timeout. Please try again.");
+            }
+            if (error.message) {
+              throw error;
+            }
+            throw new Error(`Network error: ${error.message || "Unknown error"}`);
+          }
+        },
+
+        // Mock database (for development/testing)
         _mockDB: {
           courses: [
             { id: 1, code: "CS101", name: "مبانی کامپیوتر", units: 3, department: "کامپیوتر", semester: "1403-1", capacity: 40, enrolled: 35 },
@@ -494,43 +771,144 @@
 
         _delay: (ms) => new Promise((res) => setTimeout(res, ms)),
 
+        /**
+         * Fetches all courses from API
+         * GET /api/courses
+         * Expected response: Array of course objects or {courses: [...]} or {data: [...]}
+         */
         async getCourses() {
-          console.log("API: Fetching courses...");
-          await this._delay(300);
-          return structuredClone(this._mockDB.courses);
-        },
-
-        async addCourse(courseData) {
-          console.log("API: Adding course...", courseData);
-          await this._delay(500);
-          const newId = Math.max(0, ...this._mockDB.courses.map(c => c.id)) + 1;
-          const newCourse = {
-            id: newId,
-            ...courseData,
-            enrolled: 0, // New courses start with 0 enrollments
-          };
-          this._mockDB.courses.push(newCourse);
-          return newCourse;
-        },
-
-        async updateCourse(id, courseData) {
-          console.log("API: Updating course:", id, courseData);
-          await this._delay(500);
-          const course = this._mockDB.courses.find(c => c.id === id);
-          if (course) {
-            // Preserve enrolled count when updating
-            const enrolled = course.enrolled;
-            Object.assign(course, courseData);
-            course.enrolled = enrolled; // Keep existing enrollment
+          if (AdminCourseApp.API_CONFIG.USE_MOCK) {
+            console.log("API: Fetching courses (MOCK)...");
+            await this._delay(300);
+            return structuredClone(this._mockDB.courses);
           }
-          return course;
+
+          try {
+            console.log("API: Fetching courses from backend...");
+            const url = `${AdminCourseApp.API_CONFIG.BASE_URL}${AdminCourseApp.API_CONFIG.ENDPOINTS.COURSES}`;
+            const response = await this._request(url, { method: "GET" });
+            
+            // Handle different response formats from FastAPI
+            // FastAPI typically returns arrays directly or wrapped in objects
+            if (response && typeof response === 'object') {
+              if (Array.isArray(response)) {
+                // Direct array response: [{...}, {...}]
+                return response;
+              } else if (response.courses && Array.isArray(response.courses)) {
+                // Wrapped in 'courses': {courses: [...]}
+                return response.courses;
+              } else if (response.data && Array.isArray(response.data)) {
+                // Wrapped in 'data': {data: [...]}
+                return response.data;
+              } else if (response.items && Array.isArray(response.items)) {
+                // Wrapped in 'items': {items: [...]}
+                return response.items;
+              } else if (response.results && Array.isArray(response.results)) {
+                // Paginated response: {results: [...]}
+                return response.results;
+              }
+            }
+            
+            // If we get here, return empty array as fallback
+            console.warn("Unexpected API response format:", response);
+            return [];
+          } catch (error) {
+            console.error("Error fetching courses:", error);
+            throw new Error(`Failed to fetch courses: ${error.message}`);
+          }
         },
 
+        /**
+         * Adds a new course via API
+         */
+        async addCourse(courseData) {
+          if (AdminCourseApp.API_CONFIG.USE_MOCK) {
+            console.log("API: Adding course (MOCK)...", courseData);
+            await this._delay(500);
+            const newId = Math.max(0, ...this._mockDB.courses.map(c => c.id)) + 1;
+            const newCourse = {
+              id: newId,
+              ...courseData,
+              enrolled: 0,
+            };
+            this._mockDB.courses.push(newCourse);
+            console.log("Course added to mock DB:", newCourse);
+            return newCourse;
+          }
+
+          try {
+            console.log("API: Adding course to backend...", courseData);
+            const url = `${AdminCourseApp.API_CONFIG.BASE_URL}${AdminCourseApp.API_CONFIG.ENDPOINTS.COURSES}`;
+            console.log("API URL:", url);
+            console.log("Request body:", JSON.stringify(courseData));
+            
+            const response = await this._request(url, {
+              method: "POST",
+              body: JSON.stringify(courseData),
+            });
+            
+            console.log("Course added successfully - Response:", response);
+            
+            // Handle different response formats
+            if (response && typeof response === 'object') {
+              // If response has a course object, return it
+              if (response.course) return response.course;
+              if (response.data) return response.data;
+              // Otherwise return the response itself
+              return response;
+            }
+            
+            return response;
+          } catch (error) {
+            console.error("Error adding course - Full details:", {
+              message: error.message,
+              error: error,
+              stack: error.stack
+            });
+            throw new Error(`Failed to add course: ${error.message}`);
+          }
+        },
+
+        /**
+         * Updates an existing course via API
+         */
+        async updateCourse(id, courseData) {
+          if (AdminCourseApp.API_CONFIG.USE_MOCK) {
+            console.log("API: Updating course (MOCK):", id, courseData);
+            await this._delay(500);
+            const course = this._mockDB.courses.find(c => c.id === id);
+            if (course) {
+              const enrolled = course.enrolled;
+              Object.assign(course, courseData);
+              course.enrolled = enrolled;
+            }
+            return course;
+          }
+
+          console.log("API: Updating course in backend:", id, courseData);
+          const url = `${AdminCourseApp.API_CONFIG.BASE_URL}${AdminCourseApp.API_CONFIG.ENDPOINTS.COURSE_BY_ID(id)}`;
+          return await this._request(url, {
+            method: "PUT",
+            body: JSON.stringify(courseData),
+          });
+        },
+
+        /**
+         * Deletes a course via API
+         */
         async deleteCourse(id) {
-          console.log("API: Deleting course:", id);
-          await this._delay(300);
-          this._mockDB.courses = this._mockDB.courses.filter(c => c.id !== id);
-          return { success: true };
+          if (AdminCourseApp.API_CONFIG.USE_MOCK) {
+            console.log("API: Deleting course (MOCK):", id);
+            await this._delay(300);
+            this._mockDB.courses = this._mockDB.courses.filter(c => c.id !== id);
+            return { success: true };
+          }
+
+          console.log("API: Deleting course from backend:", id);
+          const url = `${AdminCourseApp.API_CONFIG.BASE_URL}${AdminCourseApp.API_CONFIG.ENDPOINTS.COURSE_BY_ID(id)}`;
+          return await this._request(url, {
+            method: "DELETE",
+          });
         },
       },
     };
