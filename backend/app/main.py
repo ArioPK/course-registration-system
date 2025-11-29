@@ -1,23 +1,26 @@
 # backend/app/main.py
 
-from fastapi import FastAPI
+from fastapi import FastAPI # type: ignore
 
-# FastAPI application instance (this is what Uvicorn will run)
+from .config.settings import settings  # relative import from app.config
+
 app = FastAPI(
-    title="Course Registration System API",
+    title=settings.APP_NAME,
+    debug=settings.DEBUG,
     version="0.1.0",
 )
 
 
-# ---- View layer example (very simple) ----
 @app.get("/health", tags=["health"])
 def health_check():
     """
     Simple health-check endpoint to verify the app is running.
-
-    In MVC terms, this function is part of the View layer:
-    it handles HTTP and returns a response. It could delegate
-    to a controller if there was more logic.
     """
     return {"status": "ok"}
 
+
+# Optional: basic startup log using settings
+@app.on_event("startup")
+async def on_startup() -> None:
+    # In a real project you'd use logging instead of print()
+    print(f"Starting {settings.APP_NAME} (debug={settings.DEBUG})")
