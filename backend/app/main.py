@@ -1,10 +1,10 @@
 # backend/app/main.py
 
 from fastapi import FastAPI # type: ignore
-
 from .config.settings import settings
-from .views import db_debug  # new import to check if db works perfectly fine before commit 
 
+from .views import db_debug  # import to check if db works perfectly fine before commit 
+from .routers import auth
 
 
 app = FastAPI(
@@ -24,3 +24,6 @@ def health_check():
 
 #db test router . delete later
 app.include_router(db_debug.router)
+
+# Register routers
+app.include_router(auth.router)  # <-- NEW line
