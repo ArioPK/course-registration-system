@@ -15,6 +15,10 @@ from ..schemas.auth import AdminLoginRequest, TokenResponse # type: ignore
 from ..services.security import verify_password
 from ..services.jwt import create_access_token
 
+# to test rout
+from ..dependencies.auth import get_current_admin
+from ..models.admin import Admin
+
 
 router = APIRouter(
     prefix="/auth",
@@ -70,3 +74,20 @@ async def login(
         access_token=access_token,
         token_type="bearer",
     )
+
+# "who am I?" test
+@router.get("/me")
+async def read_current_admin(
+    current_admin: Admin = Depends(get_current_admin),
+) -> dict:
+    """
+    Return basic info about the currently authenticated admin.
+    Useful for testing JWT + get_current_admin.
+    """
+    return {
+        "id": current_admin.id,
+        "username": current_admin.username,
+        "email": getattr(current_admin, "email", None),
+        "is_active": getattr(current_admin, "is_active", None),
+    }
+

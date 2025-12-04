@@ -2,7 +2,7 @@
 
 import json
 
-import httpx
+import httpx # type: ignore
 
 
 def main() -> None:
