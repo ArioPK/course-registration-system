@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
-from jose import JWTError, jwt
+from jose import JWTError, jwt # type: ignore
 
 from ..config.settings import settings
 
