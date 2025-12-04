@@ -1,7 +1,7 @@
 # backend/app/services/security.py
 
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, InvalidHashError
+from argon2 import PasswordHasher # type: ignore
+from argon2.exceptions import VerifyMismatchError, InvalidHashError # type: ignore
 
 # High-level Argon2id hasher with sane defaults (RFC 9106 / OWASP style)
 pwd_hasher = PasswordHasher()
