@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.models.admin import Admin
-from backend.app.services.jwt import decode_access_token
+from backend.app.services.jwt import decode_access_token, InvalidTokenError
 
 
 # HTTP Bearer scheme – Swagger will show a simple "Value" field
