@@ -98,9 +98,8 @@
                   <th>واحد</th>
                   <th>رشته</th>
                   <th>ترم</th>
-                  <th>ظرفیت</th>
-                  <th>ثبت‌نام شده</th>
-                  <th>عملیات</th>
+                  <th>استاد</th>     <th>زمان</th>      <th>مکان</th>      <th>ظرفیت</th>
+                  <th>ثبت‌نام</th>   <th>عملیات</th>
                 </tr>
               </thead>
               <tbody id="courses-table-body"></tbody>
@@ -138,6 +137,40 @@
           <div class="form-group">
             <label for="course-capacity">ظرفیت</label>
             <input type="number" id="course-capacity" name="capacity" required min="1" placeholder="مثال: 40" />
+          </div>
+          <div class="form-group">
+            <label for="course-professor">نام استاد</label>
+            <input type="text" id="course-professor" name="professor_name" required placeholder="مثال: دکتر حسینی" />
+          </div>
+          
+          <div class="form-group">
+            <label for="course-day">روز برگزاری</label>
+            <select id="course-day" name="day_of_week" class="form-select" required>
+              <option value="">انتخاب کنید...</option>
+              <option value="SAT">شنبه</option>
+              <option value="SUN">یک‌شنبه</option>
+              <option value="MON">دوشنبه</option>
+              <option value="TUE">سه‌شنبه</option>
+              <option value="WED">چهارشنبه</option>
+              <option value="THU">پنج‌شنبه</option>
+              <option value="FRI">جمعه</option>
+            </select>
+          </div>
+          
+          <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+              <label for="course-start">ساعت شروع</label>
+              <input type="time" id="course-start" name="start_time" required />
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label for="course-end">ساعت پایان</label>
+              <input type="time" id="course-end" name="end_time" required />
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="course-location">مکان برگزاری</label>
+            <input type="text" id="course-location" name="location" required placeholder="مثال: کلاس ۱۰۱" />
           </div>
           <div class="modal-actions">
             <button type="submit" class="save-btn">ذخیره</button>
