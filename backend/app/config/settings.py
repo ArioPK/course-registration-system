@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic_settings import BaseSettings, SettingsConfigDict # type: ignore
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     All attributes here can be configured via environment variables.
     """
+    
 
     # General app settings
     APP_NAME: str = "Course Registration System API"

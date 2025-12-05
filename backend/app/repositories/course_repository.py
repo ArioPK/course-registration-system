@@ -6,8 +6,8 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from app.models.course import Course
-from app.schemas.course import CourseCreate, CourseUpdate
+from backend.app.models.course import Course
+from backend.app.schemas.course import CourseCreate, CourseUpdate
 
 
 def get_course_by_id(db: Session, course_id: int) -> Optional[Course]:

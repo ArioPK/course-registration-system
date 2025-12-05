@@ -6,9 +6,9 @@ from typing import List
 
 from sqlalchemy.orm import Session
 
-from app.models.course import Course
-from app.schemas.course import CourseCreate, CourseUpdate
-from app.repositories.course_repository import (
+from backend.app.models.course import Course
+from backend.app.schemas.course import CourseCreate, CourseUpdate
+from backend.app.repositories.course_repository import (
     get_course_by_id,
     get_courses,
     get_course_by_code,
