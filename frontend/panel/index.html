@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>پنل مدیریت دروس</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css"
+    />
+    <link rel="stylesheet" href="panel.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="admin-container">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <img src="../logo/logo-3.png" alt="لوگو" />
+          <h3>پنل مدیریت دروس</h3>
+        </div>
+        <nav class="sidebar-nav">
+          <ul>
+            <li>
+              <a
+                href="#"
+                class="nav-link active"
+                data-target="course-management"
+              >
+                <i class="ri-book-open-line"></i> مدیریت دروس
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="sidebar-footer">
+          <a href="../index.html" class="site-link" target="_blank">
+            <i class="ri-external-link-line"></i> مشاهده سایت اصلی
+          </a>
+          <a href="#" id="logout-btn">
+            <i class="ri-logout-box-r-line"></i> خروج
+          </a>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <section id="course-management" class="management-section active">
+          <header class="section-header">
+            <h1>مدیریت دروس</h1>
+            <div class="header-actions">
+              <div class="search-box">
+                <i class="ri-search-line"></i>
+                <input type="text" id="course-search" placeholder="جستجوی درس..." />
+              </div>
+              <select id="filter-department" class="filter-select">
+                <option value="">همه رشته‌ها</option>
+              </select>
+              <select id="filter-semester" class="filter-select">
+                <option value="">همه ترم‌ها</option>
+              </select>
+              <button type="button" class="add-new-btn" id="add-course-btn">
+                <i class="ri-add-line"></i> افزودن درس جدید
+              </button>
+            </div>
+          </header>
+          <div class="courses-summary">
+            <div class="summary-card">
+              <i class="ri-book-line"></i>
+              <div>
+                <span class="summary-label">تعداد کل دروس</span>
+                <span class="summary-value" id="total-courses">0</span>
+              </div>
+            </div>
+            <div class="summary-card">
+              <i class="ri-group-line"></i>
+              <div>
+                <span class="summary-label">کل ظرفیت</span>
+                <span class="summary-value" id="total-capacity">0</span>
+              </div>
+            </div>
+            <div class="summary-card">
+              <i class="ri-user-line"></i>
+              <div>
+                <span class="summary-label">کل ثبت‌نام‌ها</span>
+                <span class="summary-value" id="total-enrolled">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="content-table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>کد درس</th>
+                  <th>نام درس</th>
+                  <th>واحد</th>
+                  <th>رشته</th>
+                  <th>ترم</th>
+                  <th>ظرفیت</th>
+                  <th>ثبت‌نام شده</th>
+                  <th>عملیات</th>
+                </tr>
+              </thead>
+              <tbody id="courses-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="modal-backdrop" id="course-modal">
+      <div class="modal">
+        <button type="button" class="modal-close-btn" aria-label="بستن"><i class="ri-close-line"></i></button>
+        <form id="course-form">
+          <h3 id="course-modal-title">افزودن درس جدید</h3>
+          <div class="form-group">
+            <label for="course-code">کد درس</label>
+            <input type="text" id="course-code" name="code" required placeholder="مثال: CS101" />
+          </div>
+          <div class="form-group">
+            <label for="course-name">نام درس</label>
+            <input type="text" id="course-name" name="name" required placeholder="مثال: مبانی کامپیوتر" />
+          </div>
+          <div class="form-group">
+            <label for="course-units">تعداد واحد</label>
+            <input type="number" id="course-units" name="units" required min="1" max="6" placeholder="1-6" />
+          </div>
+          <div class="form-group">
+            <label for="course-department">رشته</label>
+            <input type="text" id="course-department" name="department" required placeholder="مثال: کامپیوتر" />
+          </div>
+          <div class="form-group">
+            <label for="course-semester">ترم</label>
+            <input type="text" id="course-semester" name="semester" required placeholder="مثال: 1403-1" />
+          </div>
+          <div class="form-group">
+            <label for="course-capacity">ظرفیت</label>
+            <input type="number" id="course-capacity" name="capacity" required min="1" placeholder="مثال: 40" />
+          </div>
+          <div class="modal-actions">
+            <button type="submit" class="save-btn">ذخیره</button>
+            <button type="button" class="cancel-btn" id="cancel-course-btn">انصراف</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+    <div class="modal-backdrop" id="confirmation-modal">
+      <div class="modal confirmation">
+        <p id="confirmation-message">آیا از انجام این کار مطمئن هستید؟</p>
+        <div class="modal-actions">
+          <button type="button" id="confirm-btn" class="save-btn">تایید</button>
+          <button type="button" id="cancel-btn" class="cancel-btn">انصراف</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="panel.js"></script>
+  </body>
+</html>
