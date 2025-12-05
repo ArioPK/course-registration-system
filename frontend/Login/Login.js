@@ -45,9 +45,9 @@
        const API_CONFIG = {
           // Set to true to use mock authentication (for development)
           // Set to false to use real API endpoint
-          USE_MOCK: true,
+          USE_MOCK: false,
           // Your actual login API endpoint URL
-          LOGIN_ENDPOINT: "https://api.example.com/auth/login",
+          LOGIN_ENDPOINT: "http://localhost:8000/auth/login",
           // Request timeout in milliseconds
           TIMEOUT: 10000
        };
