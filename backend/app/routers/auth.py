@@ -8,12 +8,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status # type: ignore
 from sqlalchemy.orm import Session # type: ignore
 
-from ..config.settings import settings
-from ..database import get_db
-from ..models.admin import Admin
-from ..schemas.auth import AdminLoginRequest, TokenResponse # type: ignore
-from ..services.security import verify_password
-from ..services.jwt import create_access_token
+from backend.app.config.settings import settings
+from backend.app.database import get_db
+from backend.app.models.admin import Admin
+from backend.app.schemas.auth import AdminLoginRequest, TokenResponse # type: ignore
+from backend.app.services.security import verify_password
+from backend.app.services.jwt import create_access_token
 
 # to test rout
 from ..dependencies.auth import get_current_admin

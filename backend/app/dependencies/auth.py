@@ -8,9 +8,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from ..database import get_db
-from ..models.admin import Admin
-from ..services.jwt import decode_access_token, InvalidTokenError
+from backend.app.database import get_db
+from backend.app.models.admin import Admin
+from backend.app.services.jwt import decode_access_token
 
 
 # HTTP Bearer scheme – Swagger will show a simple "Value" field
