@@ -59,7 +59,7 @@ export class CourseView extends NotificationService {
    * Bind click events for modal close buttons (x icons)
    */
   bindModalCloseBtns(handler) {
-    this.elements.modalCloseBtns.forEach(btn => {
+    this.elements.modalCloseBtns.forEach((btn) => {
       btn.addEventListener("click", (e) => {
         const modal = e.target.closest(".modal-backdrop");
         handler(modal);
@@ -71,7 +71,7 @@ export class CourseView extends NotificationService {
    * Bind click events for sidebar navigation links
    */
   bindNavLinks(handler) {
-    this.elements.navLinks.forEach(link => {
+    this.elements.navLinks.forEach((link) => {
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const targetId = e.currentTarget.dataset.target;
@@ -85,12 +85,12 @@ export class CourseView extends NotificationService {
    */
   setActiveSection(targetId) {
     // Update nav links
-    this.elements.navLinks.forEach(link => {
+    this.elements.navLinks.forEach((link) => {
       link.classList.toggle("active", link.dataset.target === targetId);
     });
 
     // Update sections
-    this.elements.sections.forEach(section => {
+    this.elements.sections.forEach((section) => {
       section.classList.toggle("active", section.id === targetId);
     });
   }

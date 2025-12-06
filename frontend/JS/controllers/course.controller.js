@@ -195,8 +195,6 @@ export class CourseController {
     // Logout
     this.view.bindLogout(() => this.auth.logout());
 
-
-
     // Set Active Section
     const activeSection =
       localStorage.getItem("activeAdminSection") || "course-management";

@@ -12,10 +12,10 @@ export class ApiService {
     this.baseUrl = baseUrl;
     this.timeout = 10000; // 10 seconds timeout
 
-    // 🔴 تنظیمات ماک: برای تست بدون بک‌ند روی true بگذارید
+    // Mock Mode
     this.USE_MOCK = true;
 
-    // دیتابیس ساختگی (برای حالت Mock)
+    // Mock Database
     this._mockDB = {
       courses: [
         {
@@ -83,7 +83,7 @@ export class ApiService {
   }
 
   // ============================================================
-  // Internal Helpers (ارتباط واقعی با سرور)
+  // Private Methods
   // ============================================================
 
   _getAuthToken() {
@@ -99,10 +99,6 @@ export class ApiService {
     return headers;
   }
 
-  /**
-   * متد اصلی درخواست که تمام لاجیک‌های خطا و پارس کردن را دارد
-   * (دقیقاً مشابه panel.js اصلی)
-   */
   async _request(endpoint, options = {}) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
@@ -121,13 +117,12 @@ export class ApiService {
 
       clearTimeout(timeoutId);
 
-      // 1. مدیریت خطاهای HTTP
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
 
         try {
           const errorData = await response.json();
-          // مدیریت خطاهای استاندارد FastAPI
+
           if (errorData.detail) {
             errorMessage = Array.isArray(errorData.detail)
               ? errorData.detail
@@ -140,7 +135,6 @@ export class ApiService {
             errorMessage = errorData;
           }
         } catch (e) {
-          // اگر JSON نبود متن خطا را می‌خوانیم
           try {
             const text = await response.text();
             if (text) errorMessage = text;
@@ -150,7 +144,6 @@ export class ApiService {
         throw new Error(errorMessage);
       }
 
-      // 2. مدیریت پاسخ‌های خالی (204)
       if (
         response.status === 204 ||
         response.headers.get("content-length") === "0"
@@ -158,7 +151,6 @@ export class ApiService {
         return { success: true };
       }
 
-      // 3. پارس کردن پاسخ (JSON یا Text)
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         return await response.json();
@@ -171,16 +163,56 @@ export class ApiService {
       if (error.name === "AbortError") {
         throw new Error("Request timeout. Please try again.");
       }
-      // اگر خطا مسیج داشت خودش را بفرست، وگرنه خطای عمومی
+
       throw error.message
         ? error
         : new Error(`Network error: ${error.message || "Unknown error"}`);
     }
   }
+  // ============================================================
+  // Auth Methods (Login)
+  // ============================================================
 
+  /**
+   * Logs in the user.
+   * POST /auth/login
+   * @param {string} username
+   * @param {string} password
+   * @returns {Promise<Object>} Login response with token.
+   */
+  async login(username, password) {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Login (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 1000));
+
+      if (
+        username === "admin" &&
+        (password === "1234" || password === "admin123")
+      ) {
+        return {
+          access_token: "mock_jwt_token_" + Date.now(),
+          token_type: "bearer",
+          user: { username: "admin", role: "admin" },
+        };
+      }
+      throw new Error("نام کاربری یا رمز عبور اشتباه است.");
+    }
+
+    // --- REAL MODE ---
+    // درخواست واقعی به بک‌ند
+    return await this._request("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    });
+  }
   // ============================================================
   // Public API Methods (Mock + Real Support)
   // ============================================================
+  /**
+   * Gets all courses from the API.
+   * @returns {Promise<Array<Object>>} - An array of course objects.
+   */
 
   async getCourses() {
     // --- MOCK MODE ---
@@ -194,7 +226,6 @@ export class ApiService {
     try {
       const response = await this._request("/api/courses", { method: "GET" });
 
-      // هندل کردن فرمت‌های مختلف پاسخ (مشابه panel.js)
       if (response && typeof response === "object") {
         if (Array.isArray(response)) return response;
         if (response.courses && Array.isArray(response.courses))
