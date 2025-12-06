@@ -7,7 +7,7 @@
 import { AuthService } from "./services/auth.service.js";
 import { ApiService } from "./services/api.service.js";
 import { CourseValidator } from "./utils/validator.js";
-import { CourseView } from "./ui/view.js";
+import { CourseView } from "./ui/renderer.js";
 import { CourseController } from "./controllers/course.controller.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 2. Auth Guard: Redirect if not logged in
   // We check this BEFORE initializing other heavy services.
-  if (!authService.isAuthenticated()) {
-    authService.enforceAuth(); // Redirects to login
-    return; // Stop execution
-  }
+  //if (!authService.isAuthenticated()) {
+  //  authService.enforceAuth(); // Redirects to login
+   // return; // Stop execution
+  //}
 
   // 3. Configuration
   // You can switch this to production URL later

@@ -24,7 +24,7 @@ export class CourseView extends NotificationService {
       courseStart: document.getElementById("course-start"),
       courseEnd: document.getElementById("course-end"),
       courseLocation: document.getElementById("course-location"),
-      
+
       // Buttons & Interactive Elements
       addCourseBtn: document.getElementById("add-course-btn"),
       cancelCourseBtn: document.getElementById("cancel-course-btn"),
@@ -33,16 +33,21 @@ export class CourseView extends NotificationService {
       courseSearch: document.getElementById("course-search"),
       filterDepartment: document.getElementById("filter-department"),
       filterSemester: document.getElementById("filter-semester"),
-      
+
       // Display Containers
       coursesTableBody: document.getElementById("courses-table-body"),
       courseModal: document.getElementById("course-modal"),
       courseModalTitle: document.getElementById("course-modal-title"),
-      
+
       // Summary Cards
       totalCourses: document.getElementById("total-courses"),
       totalCapacity: document.getElementById("total-capacity"),
       totalEnrolled: document.getElementById("total-enrolled"),
+
+      // Modal Close Buttons
+      modalCloseBtns: document.querySelectorAll(".modal-close-btn"),
+      navLinks: document.querySelectorAll(".nav-link"),
+      sections: document.querySelectorAll(".management-section"),
     };
   }
 
@@ -51,16 +56,61 @@ export class CourseView extends NotificationService {
   // ============================================================
 
   /**
+   * Bind click events for modal close buttons (x icons)
+   */
+  bindModalCloseBtns(handler) {
+    this.elements.modalCloseBtns.forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        const modal = e.target.closest(".modal-backdrop");
+        handler(modal);
+      });
+    });
+  }
+
+  /**
+   * Bind click events for sidebar navigation links
+   */
+  bindNavLinks(handler) {
+    this.elements.navLinks.forEach(link => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const targetId = e.currentTarget.dataset.target;
+        handler(targetId);
+      });
+    });
+  }
+
+  /**
+   * Update UI to show the active section and active link
+   */
+  setActiveSection(targetId) {
+    // Update nav links
+    this.elements.navLinks.forEach(link => {
+      link.classList.toggle("active", link.dataset.target === targetId);
+    });
+
+    // Update sections
+    this.elements.sections.forEach(section => {
+      section.classList.toggle("active", section.id === targetId);
+    });
+  }
+
+  /**
    * Helper to translate day codes to Persian.
    * @param {string} day - Day code (e.g., 'SAT')
    * @returns {string} Persian day name
    */
   _translateDay(day) {
     const days = {
-      'SAT': 'شنبه', 'SUN': 'یک‌شنبه', 'MON': 'دوشنبه', 
-      'TUE': 'سه‌شنبه', 'WED': 'چهارشنبه', 'THU': 'پنج‌شنبه', 'FRI': 'جمعه'
+      SAT: "شنبه",
+      SUN: "یک‌شنبه",
+      MON: "دوشنبه",
+      TUE: "سه‌شنبه",
+      WED: "چهارشنبه",
+      THU: "پنج‌شنبه",
+      FRI: "جمعه",
     };
-    return days[day] || day || '-';
+    return days[day] || day || "-";
   }
 
   /**
@@ -86,7 +136,7 @@ export class CourseView extends NotificationService {
     courses.forEach((course) => {
       const enrolled = course.enrolled || 0;
       // Handle potential undefined capacity to avoid division by zero
-      const capacity = course.capacity || 1; 
+      const capacity = course.capacity || 1;
       const isFull = enrolled >= capacity;
 
       const row = document.createElement("tr");
@@ -113,10 +163,14 @@ export class CourseView extends NotificationService {
         </td>
         <td>
           <div class="action-buttons">
-            <button class="action-btn edit-btn" data-id="${course.id}" title="ویرایش">
+            <button class="action-btn edit-btn" data-id="${
+              course.id
+            }" title="ویرایش">
               <i class="ri-pencil-fill"></i>
             </button>
-            <button class="action-btn delete-btn" data-id="${course.id}" title="حذف">
+            <button class="action-btn delete-btn" data-id="${
+              course.id
+            }" title="حذف">
               <i class="ri-delete-bin-6-line"></i>
             </button>
           </div>
@@ -130,8 +184,8 @@ export class CourseView extends NotificationService {
   /**
    * Populates the department and semester filter dropdowns.
    * Maps to 'populateFilters' in panel.js
-   * @param {Array<string>} departments 
-   * @param {Array<string>} semesters 
+   * @param {Array<string>} departments
+   * @param {Array<string>} semesters
    */
   populateFilters(departments, semesters) {
     // Clear existing options (keep the first "All" option)
@@ -192,7 +246,7 @@ export class CourseView extends NotificationService {
 
   /**
    * Fills the form with course data for editing.
-   * @param {Object} course 
+   * @param {Object} course
    */
   fillForm(course) {
     this.elements.courseCode.value = course.code;
@@ -218,7 +272,7 @@ export class CourseView extends NotificationService {
 
   /**
    * Toggles the submit button state (loading vs ready).
-   * @param {boolean} isSubmitting 
+   * @param {boolean} isSubmitting
    */
   setFormSubmitting(isSubmitting) {
     const btn = this.elements.courseForm.querySelector('button[type="submit"]');
@@ -277,7 +331,7 @@ export class CourseView extends NotificationService {
   bindCourseFormSubmit(handler) {
     this.elements.courseForm.addEventListener("submit", (e) => {
       e.preventDefault();
-      
+
       // Extract data manually to ensure types (e.g., parseInt)
       // This matches logic from panel.js 'onCourseFormSubmit'
       const formData = {
