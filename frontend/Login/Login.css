@@ -1,19 +1,7 @@
 /*-------------------------
     1. Global & Variables
 -------------------------*/
-:root {
-    --navy: #0b1733;
-    --navy-2: #0f1f43;
-    --navy-700: #152a5a;
-    --accent: #d4af37;
-    --accent-2: #e4b80a;
-    --light-grey: #f4f4f4;
-    --medium-grey: #b0b0b0;
-    --paper: #ffffff;
-    --danger: #e53935;
-    --danger-light: #ffcdd2;
-    --font-family: "Vazirmatn", system-ui, sans-serif;
-  }
+
   
   * {
     margin: 0;

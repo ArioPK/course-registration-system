@@ -23,12 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // We check this BEFORE initializing other heavy services.
   //if (!authService.isAuthenticated()) {
   //  authService.enforceAuth(); // Redirects to login
-   // return; // Stop execution
+  // return; // Stop execution
   //}
 
   // 3. Configuration
   // You can switch this to production URL later
-  const API_BASE_URL = "http://localhost:8000"; 
+  const API_BASE_URL = "http://localhost:8000";
 
   // 4. Instantiate Dependencies (Services & UI)
   const apiService = new ApiService(API_BASE_URL);
