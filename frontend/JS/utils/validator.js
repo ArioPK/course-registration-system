@@ -60,10 +60,10 @@ export class CourseValidator {
         field: "course-units",
         message: "تعداد واحد الزامی است.",
       });
-    } else if (formData.units < 1 || formData.units > 6) {
+    } else if (formData.units < 1 || formData.units > 4) {
       errors.push({
         field: "course-units",
-        message: "تعداد واحد باید بین 1 تا 6 باشد.",
+        message: "تعداد واحد باید بین 1 تا 4 باشد.",
       });
     }
 
