@@ -49,7 +49,7 @@ class Course(Base):
     )
     
     units: int = Column(Integer, nullable=False)                   # 1..4 units
-    major: str = Column(String(100), nullable=False)               # e.g. “Computer Engineering”
+    department: str = Column(String(100), nullable=False)               # e.g. “Computer Engineering” 
     semester: str = Column(String(20), nullable=False)             # e.g. “2025-1”
     prerequisites: str = Column(String(200), nullable=True)        # comma‑separated course codes/IDs
 
@@ -69,7 +69,7 @@ class Course(Base):
             f"location={self.location!r}"
             f"location2={self.location2!r}"
             f"units={self.units!r}"
-            f"major={self.major!r}"
+            f"department={self.department!r}"                                
             f"semester={self.semester!r}"
             f"prerequisites={self.prerequisites!r}>"
         )

@@ -92,7 +92,7 @@ def update_course(
         )
 
 
-@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT, detail ="Course deleted successfully")
 def delete_course(
     course_id: int,
     db: Session = Depends(get_db),
