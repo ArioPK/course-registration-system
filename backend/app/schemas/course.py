@@ -18,7 +18,7 @@ class DayOfWeek(str, Enum):
     THURSDAY = "THU"
     FRIDAY = "FRI"
 
-class Major(str, Enum):
+class department(str, Enum):
     COMPUTER_ENGINEERING = "Computer Engineering"
     MECHANICAL_ENGINEERING = "Mechanical Engineering"
     CIVIL_ENGINEERING = "Civil Engineering"
@@ -86,7 +86,7 @@ class CourseBase(BaseModel):
     location: constr(strip_whitespace=True, min_length=1)
     location2: Optional[constr(strip_whitespace=True, min_length=1)] = None  # for courses held in multiple locations
     units: conint(ge=1, le=4)                                   # must be 1–4
-    major: Major                                                # restrict to valid majors
+    department: department                                                # restrict to valid majors
     semester: constr(strip_whitespace=True, min_length=1)       # e.g. “2025-1”
     prerequisites: Optional[List[int]] = None                   # list of course IDs
 
@@ -119,7 +119,7 @@ class CourseUpdate(BaseModel):
     location: Optional[constr(strip_whitespace=True, min_length=1)] = None
     location2: Optional[constr(strip_whitespace=True, min_length=1)] = None
     units: Optional[conint(ge=1, le=4)] = None
-    major: Optional[Major] = None
+    department: Optional[department] = None
     semester: Optional[constr(strip_whitespace=True, min_length=1)] = None
     prerequisites: Optional[List[int]] = None
 

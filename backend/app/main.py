@@ -8,5 +8,5 @@ from backend.app.routers import auth, course
 
 app = FastAPI(title=settings.APP_NAME)
 
-app.include_router(auth.router)
-app.include_router(course.router) 
+app.include_router(auth.router, prefix="/api")
+app.include_router(course.router, prefix="/api") 
