@@ -13,7 +13,7 @@ export class ApiService {
     this.timeout = 10000; // 10 seconds timeout
 
     // Mock Mode
-    this.USE_MOCK = false;
+    this.USE_MOCK = true;
 
     // Mock Database
     this._mockDB = {
@@ -83,7 +83,7 @@ export class ApiService {
   }
 
   // ============================================================
-  // Private Methods
+  // Private Method
   // ============================================================
 
   _getAuthToken() {
@@ -200,7 +200,7 @@ export class ApiService {
     }
 
     // --- REAL MODE ---
-    // درخواست واقعی به بک‌ند
+    
     return await this._request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
