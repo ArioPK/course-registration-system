@@ -568,70 +568,83 @@
     color: var(--light-grey);
   }
   
+ /*-------------------------
+    Form Group & Input Styles
+-------------------------*/
+.form-group {
+  margin-bottom: 20px;
+  text-align: right;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--medium-grey);
+  font-weight: 500;
+}
+
+/* تغییر اصلی اینجاست: اضافه کردن number و time به سلکتور */
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="time"],
+.form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  background: rgba(255, 255, 255, 0.05); /* پس‌زمینه شیشه‌ای */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: var(--light-grey);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+/* استایل حالت فوکوس برای همه تایپ‌ها */
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
+.form-group input[type="time"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--accent); /* رنگ طلایی تم */
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* استایل پلیس‌هولدرها */
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: var(--medium-grey);
+  opacity: 0.7;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+/*-------------------------
+    Form Validation Styles
+-------------------------*/
+/* اضافه کردن استایل خطا برای number و time */
+.form-group input[type="text"].input-error,
+.form-group input[type="number"].input-error,
+.form-group input[type="time"].input-error,
+.form-group textarea.input-error {
+  border-color: var(--danger);
+  background: rgba(229, 57, 53, 0.1);
+}
+
+.form-group input.input-error:focus,
+.form-group textarea.input-error:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.2);
+}
+
   /*-------------------------
-      Form Group & Input Styles
+      Field Error Styles
   -------------------------*/
-  .form-group {
-    margin-bottom: 20px;
-    text-align: right;
-  }
-  
-  .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    color: var(--medium-grey);
-    font-weight: 500;
-  }
-  
-  .form-group input[type="text"],
-  .form-group textarea {
-    width: 100%;
-    padding: 12px 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: var(--light-grey);
-    font-family: var(--font-family);
-    font-size: 1rem;
-    transition: all 0.3s ease;
-  }
-  
-  .form-group input[type="text"]:focus,
-  .form-group textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
-    background: rgba(255, 255, 255, 0.08);
-  }
-  
-  .form-group input[type="text"]::placeholder,
-  .form-group textarea::placeholder {
-    color: var(--medium-grey);
-    opacity: 0.7;
-  }
-  
-  .form-group textarea {
-    resize: vertical;
-    min-height: 100px;
-    line-height: 1.6;
-  }
-  
-  /*-------------------------
-      Form Validation Styles
-  -------------------------*/
-  .form-group input.input-error,
-  .form-group textarea.input-error {
-    border-color: var(--danger);
-    background: rgba(229, 57, 53, 0.1);
-  }
-  
-  .form-group input.input-error:focus,
-  .form-group textarea.input-error:focus {
-    border-color: var(--danger);
-    box-shadow: 0 0 0 3px rgba(229, 57, 53, 0.2);
-  }
-  
   .field-error {
     display: block;
     color: var(--danger-light);
