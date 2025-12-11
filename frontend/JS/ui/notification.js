@@ -7,13 +7,11 @@ export class NotificationService {
   constructor() {
     this.confirmationModal = document.getElementById("confirmation-modal");
     
-    // ایجاد کانتینر برای نوتیفیکیشن‌ها اگر وجود نداشته باشد
+    
     this._initToastContainer();
   }
 
-  /**
-   * کانتینر نگهدارنده پیام‌ها را به بدنه صفحه اضافه می‌کند
-   */
+ 
   _initToastContainer() {
     if (!document.querySelector('.toast-container')) {
       this.toastContainer = document.createElement('div');
@@ -25,16 +23,15 @@ export class NotificationService {
   }
 
   /**
-   * نمایش پیام تست (Toast)
-   * @param {string} title - عنوان پیام
-   * @param {string} message - متن پیام
-   * @param {string} type - نوع پیام (success | error)
+   * @param {string} title 
+   * @param {string} message 
+   * @param {string} type 
    */
   _showToast(title, message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     
-    // انتخاب آیکون بر اساس نوع پیام
+   
     const iconClass = type === 'success' ? 'ri-checkbox-circle-fill' : 'ri-error-warning-fill';
 
     toast.innerHTML = `
@@ -47,7 +44,7 @@ export class NotificationService {
 
     this.toastContainer.appendChild(toast);
 
-    // حذف خودکار بعد از ۴ ثانیه
+   
     setTimeout(() => {
       toast.style.animation = 'toastFadeOut 0.5s ease forwards';
       toast.addEventListener('animationend', () => {
@@ -57,11 +54,11 @@ export class NotificationService {
   }
 
   // ============================================================
-  // General Notifications (Toasts) - جایگزین Alert
+  // General Notifications (Toasts) 
   // ============================================================
 
   showSuccess(message) {
-    // دیگر از alert استفاده نمی‌کنیم
+    
     this._showToast("موفقیت‌آمیز", message, "success");
   }
 
@@ -70,7 +67,7 @@ export class NotificationService {
   }
 
   // ============================================================
-  // Modal Management (دست نخورده باقی می‌ماند)
+  // Modal Management 
   // ============================================================
 
   openModal(modal) {
@@ -109,7 +106,7 @@ export class NotificationService {
   }
 
   // ============================================================
-  // Form Validation UI (دست نخورده باقی می‌ماند)
+  // Form Validation UI 
   // ============================================================
 
   showValidationErrors(errors) {
