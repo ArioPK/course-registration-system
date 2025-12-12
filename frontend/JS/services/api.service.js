@@ -186,6 +186,33 @@ export class ApiService {
       console.warn("⚠️ API: Login (MOCK mode)");
       await new Promise((r) => setTimeout(r, 1000));
 
+      
+      if (username === "admin" && password === "admin123") {
+        return {
+          access_token: "mock_token_admin",
+          token_type: "bearer",
+          user: { username: "admin", role: "admin" },
+        };
+      }
+      
+      
+      if (username === "std1" && password === "1234") {
+        return {
+          access_token: "mock_token_student",
+          token_type: "bearer",
+          user: { username: "std1", role: "student", id: 101 },
+        };
+      }
+
+      
+      if (username === "prof1" && password === "1234") {
+        return {
+          access_token: "mock_token_prof",
+          token_type: "bearer",
+          user: { username: "prof1", role: "professor", id: 201 },
+        };
+      }
+
       if (
         username === "admin" &&
         (password === "1234" || password === "admin123")
@@ -263,7 +290,7 @@ export class ApiService {
         body: JSON.stringify(courseData),
       });
 
-      // هندل کردن لفاف‌های پاسخ (Unwrapping)
+      
       if (response && typeof response === "object") {
         if (response.course) return response.course;
         if (response.data) return response.data;

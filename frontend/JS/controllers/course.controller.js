@@ -26,6 +26,11 @@ export class CourseController {
   }
 
   async init() {
+    // 1. Check Auth (Redundant if handled in main.js, but good for safety)
+    // if (!this.auth.isAuthenticated()) {
+    //   this.auth.logout();
+    //  return;
+    //}
     this._bindEvents();
     await this.loadInitialData();
   }
@@ -47,7 +52,7 @@ export class CourseController {
       this._updateSummary();
     } catch (error) {
       console.error(error);
-      // تغییر ۱: استفاده از showError به جای alert
+
       this.view.showError(error.message || "خطا در بارگیری اطلاعات.");
     }
   }
@@ -176,11 +181,10 @@ export class CourseController {
       async () => {
         try {
           await this.api.deleteCourse(id);
-          // تغییر ۲: نمایش پیام موفقیت حذف
+
           this.view.showSuccess("درس با موفقیت حذف شد.");
           await this.loadInitialData();
         } catch (error) {
-          // تغییر ۳: استفاده از showError
           this.view.showError(error.message);
         }
       }
@@ -216,11 +220,10 @@ export class CourseController {
 
       await this.loadInitialData();
 
-      // تغییر ۴: استفاده از showSuccess به جای alert
       this.view.showSuccess("درس با موفقیت ذخیره شد.");
     } catch (error) {
       console.error(error);
-      // تغییر ۵: استفاده از showError به جای alert
+
       this.view.showError(`خطا: ${error.message}`);
     } finally {
       this.view.setFormSubmitting(false);
