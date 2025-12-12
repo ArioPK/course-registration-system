@@ -36,6 +36,17 @@ export class CourseView extends NotificationService {
 
       // Display Containers
       coursesTableBody: document.getElementById("courses-table-body"),
+      prerequisitesTableBody: document.getElementById(
+        "prerequisites-table-body"
+      ),
+      openPrereqModalBtn: document.getElementById("open-prereq-modal-btn"),
+      prereqModal: document.getElementById("prerequisite-modal"),
+      prereqForm: document.getElementById("prerequisite-form"),
+      targetCourseSelect: document.getElementById("target-course-id"),
+      prerequisiteCourseSelect: document.getElementById(
+        "prerequisite-course-id"
+      ),
+      savePrereqBtn: document.getElementById("save-prereq-btn"),
       courseModal: document.getElementById("course-modal"),
       courseModalTitle: document.getElementById("course-modal-title"),
 
@@ -118,6 +129,77 @@ export class CourseView extends NotificationService {
    * Maps to 'render.courses' in panel.js
    * @param {Array} courses - List of course objects
    */
+
+  populateCourseDropdowns(courses) {
+    const targetSelect = this.elements.targetCourseSelect;
+    const prereqSelect = this.elements.prerequisiteCourseSelect;
+
+    // Clear existing options (keep the first "انتخاب کنید...")
+    while (targetSelect.children.length > 1) {
+      targetSelect.removeChild(targetSelect.lastChild);
+    }
+    while (prereqSelect.children.length > 1) {
+      prereqSelect.removeChild(prereqSelect.lastChild);
+    }
+
+    courses.forEach((course) => {
+      const option = document.createElement("option");
+      option.value = course.id;
+      option.textContent = `${course.code} - ${course.name}`;
+      targetSelect.appendChild(option.cloneNode(true));
+      prereqSelect.appendChild(option);
+    });
+  }
+
+  /**
+   * Renders the list of prerequisites into the table.
+   * @param {Array} prerequisites - List of prerequisite objects from state
+   * @param {Array} coursesMap - Map of {id: course} for lookup
+   */
+  renderPrerequisites(prerequisites, coursesMap) {
+    const tbody = this.elements.prerequisitesTableBody;
+    tbody.innerHTML = "";
+
+    if (!prerequisites || prerequisites.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 40px; color: var(--medium-grey);">
+            هیچ پیش‌نیازی تعریف نشده است.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    prerequisites.forEach((prereq) => {
+      const targetCourse = coursesMap[prereq.target_course_id] || {
+        code: "N/A",
+        name: "N/A",
+      };
+      const prereqCourse = coursesMap[prereq.prerequisite_course_id] || {
+        code: "N/A",
+        name: "N/A",
+      };
+
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${targetCourse.name}</td>
+        <td>${targetCourse.code}</td>
+        <td>${prereqCourse.name}</td>
+        <td>${prereqCourse.code}</td>
+        <td style="text-align: center;">
+          <div class="action-buttons">
+            <button class="action-btn delete-prereq-btn" data-id="${prereq.id}" title="حذف پیش‌نیاز">
+              <i class="ri-delete-bin-6-line"></i>
+            </button>
+          </div>
+        </td>
+      `;
+
+      tbody.appendChild(row);
+    });
+  }
+
   renderCourses(courses) {
     const tbody = this.elements.coursesTableBody;
     tbody.innerHTML = "";
@@ -231,6 +313,15 @@ export class CourseView extends NotificationService {
   // Form & Modal Manipulation
   // ============================================================
 
+  openPrereqModal() {
+    this.openModal(this.elements.prereqModal);
+  }
+
+  closePrereqModal() {
+    this.closeModal(this.elements.prereqModal);
+    this.elements.prereqForm.reset();
+  }
+
   openCourseModal() {
     this.openModal(this.elements.courseModal);
   }
@@ -297,6 +388,51 @@ export class CourseView extends NotificationService {
   // ============================================================
   // Event Binding (Connecting View to Controller)
   // ============================================================
+
+  bindOpenPrereqModal(handler) {
+    this.elements.openPrereqModalBtn.addEventListener("click", handler);
+  }
+
+  bindPrerequisiteFormSubmit(handler) {
+    this.elements.prereqForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      // Extract data and convert to Int
+      const formData = {
+        target_course_id: parseInt(this.elements.targetCourseSelect.value),
+        prerequisite_course_id: parseInt(
+          this.elements.prerequisiteCourseSelect.value
+        ),
+      };
+
+      handler(formData);
+    });
+  }
+
+  bindPrerequisiteTableActions(onDelete) {
+    this.elements.prerequisitesTableBody.addEventListener("click", (e) => {
+      const deleteBtn = e.target.closest(".delete-prereq-btn");
+
+      if (deleteBtn) {
+        const id = parseInt(deleteBtn.dataset.id);
+        onDelete(id);
+      }
+    });
+  }
+
+  setPrereqFormSubmitting(isSubmitting) {
+    const btn = this.elements.savePrereqBtn;
+    if (isSubmitting) {
+      btn.dataset.originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "در حال ذخیره...";
+    } else {
+      btn.disabled = false;
+      if (btn.dataset.originalText) {
+        btn.textContent = btn.dataset.originalText;
+      }
+    }
+  }
 
   bindSearch(handler) {
     this.elements.courseSearch.addEventListener("input", (e) => {

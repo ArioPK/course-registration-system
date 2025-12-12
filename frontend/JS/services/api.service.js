@@ -79,6 +79,20 @@ export class ApiService {
           enrolled: 35,
         },
       ],
+      
+      prerequisites: [
+        {
+          id: 1, 
+          target_course_id: 2, 
+          prerequisite_course_id: 1, 
+        },
+        {
+          id: 2,
+          target_course_id: 4, 
+          prerequisite_course_id: 3, 
+        },
+      ],
+      
     };
   }
 
@@ -186,7 +200,6 @@ export class ApiService {
       console.warn("⚠️ API: Login (MOCK mode)");
       await new Promise((r) => setTimeout(r, 1000));
 
-      
       if (username === "admin" && password === "admin123") {
         return {
           access_token: "mock_token_admin",
@@ -194,8 +207,7 @@ export class ApiService {
           user: { username: "admin", role: "admin" },
         };
       }
-      
-      
+
       if (username === "std1" && password === "1234") {
         return {
           access_token: "mock_token_student",
@@ -204,7 +216,6 @@ export class ApiService {
         };
       }
 
-      
       if (username === "prof1" && password === "1234") {
         return {
           access_token: "mock_token_prof",
@@ -227,7 +238,7 @@ export class ApiService {
     }
 
     // --- REAL MODE ---
-    
+
     return await this._request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
@@ -290,7 +301,6 @@ export class ApiService {
         body: JSON.stringify(courseData),
       });
 
-      
       if (response && typeof response === "object") {
         if (response.course) return response.course;
         if (response.data) return response.data;
@@ -346,6 +356,90 @@ export class ApiService {
     } catch (error) {
       console.error(`Error deleting course ${id}:`, error);
       throw new Error(`خطا در حذف درس: ${error.message}`);
+    }
+  }
+
+  // ============================================================
+  // Prerequisite Methods (Mock + Real Support)
+  // ============================================================
+
+  async getPrerequisites() {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching prerequisites (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 300));
+      return structuredClone(this._mockDB.prerequisites);
+    }
+
+    // --- REAL MODE (Assuming backend route is /api/prerequisites) ---
+    try {
+      const response = await this._request("/api/prerequisites", {
+        method: "GET",
+      });
+      return response || [];
+    } catch (error) {
+      throw new Error(`خطا در دریافت پیش‌نیازها: ${error.message}`);
+    }
+  }
+
+  async addPrerequisite(data) {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Adding prerequisite (MOCK mode)", data);
+      await new Promise((r) => setTimeout(r, 500));
+
+      if (data.target_course_id == data.prerequisite_course_id) {
+        throw new Error("درس هدف و پیش‌نیاز نمی‌توانند یکسان باشند.");
+      }
+
+      // Mock uniqueness check
+      const isDuplicate = this._mockDB.prerequisites.some(
+        (p) =>
+          p.target_course_id == data.target_course_id &&
+          p.prerequisite_course_id == data.prerequisite_course_id
+      );
+
+      if (isDuplicate) {
+        throw new Error("این پیش‌نیاز قبلاً تعریف شده است.");
+      }
+
+      const newId =
+        Math.max(0, ...this._mockDB.prerequisites.map((p) => p.id)) + 1;
+      const newPrereq = { id: newId, ...data };
+      this._mockDB.prerequisites.push(newPrereq);
+      return newPrereq;
+    }
+
+    // --- REAL MODE ---
+    try {
+      return await this._request("/api/prerequisites", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.error("Error adding prerequisite:", error);
+      throw new Error(`خطا در افزودن پیش‌نیاز: ${error.message}`);
+    }
+  }
+
+  async deletePrerequisite(prerequisiteId) {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Deleting prerequisite (MOCK mode)", prerequisiteId);
+      this._mockDB.prerequisites = this._mockDB.prerequisites.filter(
+        (p) => p.id != prerequisiteId
+      );
+      return { success: true };
+    }
+
+    // --- REAL MODE (Assuming backend route is /api/prerequisites/{id}) ---
+    try {
+      return await this._request(`/api/prerequisites/${prerequisiteId}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error(`Error deleting prerequisite ${prerequisiteId}:`, error);
+      throw new Error(`خطا در حذف پیش‌نیاز: ${error.message}`);
     }
   }
 }

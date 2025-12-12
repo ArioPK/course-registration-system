@@ -18,6 +18,8 @@ export class CourseController {
 
     this.state = {
       courses: [],
+      prerequisites: [], 
+      coursesMap: {},    
       currentEditId: null,
       searchQuery: "",
       filterDepartment: "",
@@ -37,8 +39,20 @@ export class CourseController {
 
   async loadInitialData() {
     try {
-      const courses = await this.api.getCourses();
+      // Fetch courses and prerequisites in parallel
+      const [courses, prerequisites] = await Promise.all([
+        this.api.getCourses(),
+        this.api.getPrerequisites(), 
+      ]);
+
       this.state.courses = courses || [];
+      this.state.prerequisites = prerequisites || []; 
+
+      // Build map for fast course lookup by ID
+      this.state.coursesMap = this.state.courses.reduce((acc, course) => {
+        acc[course.id] = course;
+        return acc;
+      }, {}); // <<< ساخت نقشه
 
       const departments = [
         ...new Set(this.state.courses.map((c) => c.department).filter(Boolean)),
@@ -48,7 +62,10 @@ export class CourseController {
       ].sort();
 
       this.view.populateFilters(departments, semesters);
+      this.view.populateCourseDropdowns(this.state.courses); 
+
       this._refreshCourseList();
+      this._refreshPrerequisitesList(); 
       this._updateSummary();
     } catch (error) {
       console.error(error);
@@ -90,6 +107,12 @@ export class CourseController {
     this.view.renderCourses(filteredCourses);
   }
 
+  
+  _refreshPrerequisitesList() {
+    this.view.renderPrerequisites(this.state.prerequisites, this.state.coursesMap);
+  }
+ 
+
   _updateSummary() {
     const totalCourses = this.state.courses.length;
     const totalCapacity = this.state.courses.reduce(
@@ -124,6 +147,18 @@ export class CourseController {
       this._refreshCourseList();
     });
 
+   
+    this.view.bindOpenPrereqModal(() => this.view.openPrereqModal());
+
+    this.view.bindPrerequisiteFormSubmit((formData) =>
+      this._handlePrerequisiteFormSubmit(formData)
+    );
+
+    this.view.bindPrerequisiteTableActions(
+      (id) => this._handleDeletePrerequisiteClick(id)
+    );
+  
+    
     this.view.bindAddCourseBtn(() => this._handleAddCourseClick());
     this.view.bindCancelCourseBtn(() => this.view.closeCourseModal());
 
@@ -190,6 +225,66 @@ export class CourseController {
       }
     );
   }
+  
+  
+  async _handlePrerequisiteFormSubmit(formData) {
+    if (formData.target_course_id === formData.prerequisite_course_id) {
+        this.view.showError("درس هدف و درس پیش‌نیاز نمی‌توانند یکسان باشند.");
+        return;
+    }
+
+    // Optional: Frontend validation for duplicate (though backend should enforce it)
+    const isDuplicate = this.state.prerequisites.some(
+        (p) =>
+            p.target_course_id === formData.target_course_id &&
+            p.prerequisite_course_id === formData.prerequisite_course_id
+    );
+    
+    if (isDuplicate) {
+         this.view.showError("این پیش‌نیاز قبلاً تعریف شده است.");
+         return;
+    }
+
+
+    this.view.setPrereqFormSubmitting(true);
+
+    try {
+      await this.api.addPrerequisite(formData);
+      
+      this.view.closePrereqModal();
+      await this.loadInitialData(); // Reload all data to refresh tables
+      this.view.showSuccess("پیش‌نیاز با موفقیت تعریف شد.");
+    } catch (error) {
+      console.error(error);
+      this.view.showError(`خطا در تعریف پیش‌نیاز: ${error.message}`);
+    } finally {
+      this.view.setPrereqFormSubmitting(false);
+    }
+  }
+
+  _handleDeletePrerequisiteClick(id) {
+    const prereq = this.state.prerequisites.find((p) => p.id === id);
+    if (!prereq) return;
+
+    // Use coursesMap for user-friendly confirmation message
+    const targetCourse = this.state.coursesMap[prereq.target_course_id]?.name || `ID ${prereq.target_course_id}`;
+    const prereqCourse = this.state.coursesMap[prereq.prerequisite_course_id]?.name || `ID ${prereq.prerequisite_course_id}`;
+
+    this.view.showConfirmation(
+      `آیا از حذف پیش‌نیاز "${prereqCourse}" برای درس "${targetCourse}" مطمئن هستید؟`,
+      async () => {
+        try {
+          await this.api.deletePrerequisite(id);
+
+          this.view.showSuccess("پیش‌نیاز با موفقیت حذف شد.");
+          await this.loadInitialData();
+        } catch (error) {
+          this.view.showError(error.message);
+        }
+      }
+    );
+  }
+ 
 
   async _handleFormSubmit(formData) {
     this.view.clearValidationErrors();

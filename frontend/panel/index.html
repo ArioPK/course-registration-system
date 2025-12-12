@@ -36,6 +36,25 @@
               </a>
             </li>
           </ul>
+          <li>
+      <a
+        href="#"
+        class="nav-link"
+        data-target="prerequisite-management"
+      >
+        <i class="ri-flow-chart"></i> مدیریت پیش‌نیازها
+      </a>
+    </li>
+    <li>
+      <a
+        href="#"
+        class="nav-link"
+        data-target="prerequisite-management"
+      >
+        <i class="ri-flow-chart"></i> مدیریت پیش‌نیازها
+      </a>
+    </li>
+    </ul>
         </nav>
         <div class="sidebar-footer">
           <a href="../index.html" class="site-link" target="_blank">
@@ -104,6 +123,36 @@
                 </tr>
               </thead>
               <tbody id="courses-table-body"></tbody>
+            </table>
+          </div>
+        </section>
+        <section id="prerequisite-management" class="management-section">
+          <header class="section-header">
+            <h1>مدیریت پیش‌نیازهای دروس</h1>
+            <div class="header-actions">
+              <button
+                type="button"
+                class="add-new-btn"
+                id="open-prereq-modal-btn"
+              >
+                <i class="ri-add-line"></i> افزودن پیش‌نیاز جدید
+              </button>
+            </div>
+          </header>
+        
+          <div class="content-table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>درس هدف (Target Course)</th>
+                  <th>کد درس هدف</th>
+                  <th>پیش‌نیاز (Prerequisite Course)</th>
+                  <th>کد پیش‌نیاز</th>
+                  <th style="width: 100px;">عملیات</th>
+                </tr>
+              </thead>
+              <tbody id="prerequisites-table-body">
+                </tbody>
             </table>
           </div>
         </section>
@@ -180,6 +229,40 @@
         </form>
       </div>
     </div>
+    <div class="modal-backdrop" id="prerequisite-modal">
+  <div class="modal">
+    <button
+      type="button"
+      class="modal-close-btn"
+      aria-label="بستن"
+    >
+      <i class="ri-close-line"></i>
+    </button>
+    <form id="prerequisite-form">
+      <h3 id="prereq-modal-title">افزودن پیش‌نیاز جدید</h3>
+      <p style="text-align: center; margin-bottom: 20px; color: var(--medium-grey);">یک درس را به عنوان پیش‌نیاز برای درس دیگر تعیین کنید.</p>
+
+      <div class="form-group">
+        <label for="target-course-id">درس هدف (که به پیش‌نیاز نیاز دارد)</label>
+        <select id="target-course-id" name="target_course_id" class="form-select" required>
+          <option value="">انتخاب کنید...</option>
+          </select>
+      </div>
+
+      <div class="form-group">
+        <label for="prerequisite-course-id">درس پیش‌نیاز (درسی که باید قبلاً پاس شده باشد)</label>
+        <select id="prerequisite-course-id" name="prerequisite_course_id" class="form-select" required>
+          <option value="">انتخاب کنید...</option>
+          </select>
+      </div>
+
+      <div class="modal-actions">
+        <button type="submit" class="save-btn" id="save-prereq-btn">ذخیره</button>
+        <button type="button" class="cancel-btn modal-close-btn" id="cancel-prereq-btn">انصراف</button>
+      </div>
+    </form>
+  </div>
+</div>
     
     <div class="modal-backdrop" id="confirmation-modal">
       <div class="modal confirmation">

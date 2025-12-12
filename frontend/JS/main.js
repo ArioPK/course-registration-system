@@ -26,6 +26,13 @@ document.addEventListener("DOMContentLoaded", () => {
    return; // Stop execution
   }
 
+  const userRole = authService.getRole();
+  if (userRole !== 'admin') {
+      console.warn(`Access denied for role: ${userRole}. Redirecting.`);
+      window.location.href = authService.getRedirectUrl();
+      return; // Stop execution
+  }
+
   // 3. Configuration
   // You can switch this to production URL later
   const API_BASE_URL = "http://localhost:8000";
