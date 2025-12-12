@@ -92,6 +92,13 @@ export class ApiService {
           prerequisite_course_id: 3, 
         },
       ],
+
+      
+    unitConfig: {
+      min_units: 12,
+      max_units: 20,
+    },
+    
       
     };
   }
@@ -358,6 +365,60 @@ export class ApiService {
       throw new Error(`خطا در حذف درس: ${error.message}`);
     }
   }
+
+  // ============================================================
+// Unit Configuration Methods (Mock + Real Support)
+// ============================================================
+
+/**
+ * Gets the current unit configuration settings.
+ * @returns {Promise<Object>} - The current min/max unit settings.
+ */
+async getUnitConfiguration() {
+  // --- MOCK MODE ---
+  if (this.USE_MOCK) {
+    console.warn("⚠️ API: Fetching unit configuration (MOCK mode)");
+    await new Promise((r) => setTimeout(r, 200));
+    return structuredClone(this._mockDB.unitConfig);
+  }
+
+  // --- REAL MODE (Assuming backend route is /api/settings/units) ---
+  try {
+    const response = await this._request("/api/settings/units", {
+      method: "GET",
+    });
+    // Provide a default if backend returns empty/null
+    return response || { min_units: 12, max_units: 20 }; 
+  } catch (error) {
+    throw new Error(`خطا در دریافت تنظیمات واحد: ${error.message}`);
+  }
+}
+
+/**
+ * Saves the new unit configuration settings.
+ * @param {Object} configData - { min_units, max_units }
+ * @returns {Promise<Object>} - The saved configuration object.
+ */
+async saveUnitConfiguration(configData) {
+  // --- MOCK MODE ---
+  if (this.USE_MOCK) {
+    console.warn("⚠️ API: Saving unit configuration (MOCK mode)", configData);
+    await new Promise((r) => setTimeout(r, 500));
+    this._mockDB.unitConfig = { ...configData };
+    return structuredClone(this._mockDB.unitConfig);
+  }
+
+  // --- REAL MODE (Assuming backend route is /api/settings/units) ---
+  try {
+    return await this._request("/api/settings/units", {
+      method: "PUT",
+      body: JSON.stringify(configData),
+    });
+  } catch (error) {
+    console.error("Error saving unit configuration:", error);
+    throw new Error(`خطا در ذخیره تنظیمات واحد: ${error.message}`);
+  }
+}
 
   // ============================================================
   // Prerequisite Methods (Mock + Real Support)

@@ -906,6 +906,34 @@ tbody:empty::after {
   }
 }
 
+
+/*-------------------------
+      10. Unit Configuration Settings
+  -------------------------*/
+
+  .unit-config-card {
+    max-width: 500px;
+    padding: 20px;
+    background: var(--navy);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .unit-config-title {
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+  }
+  
+  .unit-config-description {
+    margin-bottom: 25px;
+    color: var(--medium-grey);
+  }
+  
+  .unit-config-actions {
+    margin-top: 20px;
+  }
+
 /*-------------------------
       Tablet & Large Mobile (<= 992px)
   -------------------------*/

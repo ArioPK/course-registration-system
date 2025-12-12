@@ -34,6 +34,13 @@ export class CourseView extends NotificationService {
       filterDepartment: document.getElementById("filter-department"),
       filterSemester: document.getElementById("filter-semester"),
 
+      // NEW SETTINGS ELEMENTS
+      unitConfigurationForm: document.getElementById("unit-configuration-form"),
+      minUnitsInput: document.getElementById("min-units"),
+      maxUnitsInput: document.getElementById("max-units"),
+      saveUnitSettingsBtn: document.getElementById("save-unit-settings-btn"),
+      // END NEW SETTINGS ELEMENTS
+
       // Display Containers
       coursesTableBody: document.getElementById("courses-table-body"),
       prerequisitesTableBody: document.getElementById(
@@ -386,8 +393,66 @@ export class CourseView extends NotificationService {
   }
 
   // ============================================================
+  // New Settings Methods
+  // ============================================================
+
+  /**
+   * Fills the unit configuration form with current settings.
+   * @param {Object} settings - { min_units, max_units }
+   */
+  fillUnitConfigurationForm(settings) {
+    if (this.elements.minUnitsInput) {
+      this.elements.minUnitsInput.value = settings.min_units || "";
+    }
+    if (this.elements.maxUnitsInput) {
+      this.elements.maxUnitsInput.value = settings.max_units || "";
+    }
+  }
+
+  /**
+   * Toggles the save button state (loading vs ready) for unit settings.
+   * @param {boolean} isSubmitting
+   */
+  setUnitSettingsSubmitting(isSubmitting) {
+    const btn = this.elements.saveUnitSettingsBtn;
+    if (btn) {
+      if (isSubmitting) {
+        btn.dataset.originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "در حال ذخیره...";
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalText) {
+          btn.textContent = btn.dataset.originalText;
+        } else {
+          btn.textContent = "ذخیره تنظیمات"; // Fallback to original text
+        }
+      }
+    }
+  }
+
+  // ============================================================
   // Event Binding (Connecting View to Controller)
   // ============================================================
+
+  /**
+   * Binds the submit event for the unit configuration form.
+   * @param {Function} handler - Callback for save(formData)
+   */
+  bindUnitConfigurationFormSubmit(handler) {
+    if (this.elements.unitConfigurationForm) {
+      this.elements.unitConfigurationForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const formData = {
+          min_units: parseInt(this.elements.minUnitsInput.value),
+          max_units: parseInt(this.elements.maxUnitsInput.value),
+        };
+
+        handler(formData);
+      });
+    }
+  }
 
   bindOpenPrereqModal(handler) {
     this.elements.openPrereqModalBtn.addEventListener("click", handler);

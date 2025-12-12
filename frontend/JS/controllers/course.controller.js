@@ -24,6 +24,7 @@ export class CourseController {
       searchQuery: "",
       filterDepartment: "",
       filterSemester: "",
+      unitConfiguration: { min_units: null, max_units: null }, // NEW STATE
     };
   }
 
@@ -40,13 +41,15 @@ export class CourseController {
   async loadInitialData() {
     try {
       // Fetch courses and prerequisites in parallel
-      const [courses, prerequisites] = await Promise.all([
+      const [courses, prerequisites, unitConfiguration] = await Promise.all([ // MODIFIED
         this.api.getCourses(),
         this.api.getPrerequisites(), 
+        this.api.getUnitConfiguration(), // NEW: Fetch unit configuration
       ]);
 
       this.state.courses = courses || [];
       this.state.prerequisites = prerequisites || []; 
+      this.state.unitConfiguration = unitConfiguration || { min_units: 12, max_units: 20 }; // NEW: Store config (with fallback)
 
       // Build map for fast course lookup by ID
       this.state.coursesMap = this.state.courses.reduce((acc, course) => {
@@ -63,6 +66,8 @@ export class CourseController {
 
       this.view.populateFilters(departments, semesters);
       this.view.populateCourseDropdowns(this.state.courses); 
+      
+      this.view.fillUnitConfigurationForm(this.state.unitConfiguration); // NEW: Fill settings form
 
       this._refreshCourseList();
       this._refreshPrerequisitesList(); 
@@ -182,6 +187,12 @@ export class CourseController {
     });
 
     this.view.bindLogout(() => this.auth.logout());
+    
+    // NEW BINDING: Settings form
+    this.view.bindUnitConfigurationFormSubmit((formData) => 
+      this._handleSaveUnitConfiguration(formData)
+    );
+    // END NEW BINDING
 
     const activeSection =
       localStorage.getItem("activeAdminSection") || "course-management";
@@ -285,6 +296,40 @@ export class CourseController {
     );
   }
  
+  // NEW METHOD: Handle saving unit configuration
+  async _handleSaveUnitConfiguration(formData) {
+    // 1. Validation
+    this.view.clearValidationErrors(this.view.elements.unitConfigurationForm); // Clear previous errors
+    
+    const validationResult = this.validator.validateUnitConfiguration(formData);
+    
+    if (!validationResult.isValid) {
+      this.view.showValidationErrors(validationResult.errors);
+      return;
+    }
+
+    // 2. Set Loading State
+    this.view.setUnitSettingsSubmitting(true);
+
+    try {
+      // 3. API Call (PUT/POST)
+      const savedConfig = await this.api.saveUnitConfiguration(formData);
+
+      // 4. Update State and View
+      this.state.unitConfiguration = savedConfig;
+      this.view.fillUnitConfigurationForm(savedConfig); // Re-fill form
+
+      // 5. Success Notification
+      this.view.showSuccess("تنظیمات واحد با موفقیت ذخیره شد.");
+
+    } catch (error) {
+      console.error(error);
+      this.view.showError(`خطا در ذخیره تنظیمات: ${error.message}`);
+    } finally {
+      // 6. Reset Loading State
+      this.view.setUnitSettingsSubmitting(false);
+    }
+  }
 
   async _handleFormSubmit(formData) {
     this.view.clearValidationErrors();
