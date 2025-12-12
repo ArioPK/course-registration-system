@@ -49,9 +49,9 @@
       <a
         href="#"
         class="nav-link"
-        data-target="prerequisite-management"
+        data-target="settings-management"
       >
-        <i class="ri-flow-chart"></i> مدیریت پیش‌نیازها
+        <i class="ri-settings-3-line"></i> تنظیمات
       </a>
     </li>
     </ul>
@@ -154,6 +154,28 @@
               <tbody id="prerequisites-table-body">
                 </tbody>
             </table>
+          </div>
+        </section>
+        <section id="settings-management" class="management-section">
+          <header class="section-header">
+            <h1>تنظیمات سیستم</h1>
+          </header>
+          <div class="settings-card unit-config-card">
+            <h3 class="unit-config-title">تنظیمات واحد‌های درسی</h3>
+            <p class="unit-config-description">حداقل و حداکثر واحد مجاز برای دانشجویان عادی (آزمایشگاهی) را تعیین کنید.</p>
+            <form id="unit-configuration-form">
+              <div class="form-group">
+                <label for="min-units">حداقل واحد مجاز</label>
+                <input type="number" id="min-units" name="min_units" required min="1" max="10" placeholder="مثال: 12" />
+              </div>
+              <div class="form-group">
+                <label for="max-units">حداکثر واحد مجاز</label>
+                <input type="number" id="max-units" name="max_units" required min="12" max="24" placeholder="مثال: 20" />
+              </div>
+              <div class="modal-actions unit-config-actions">
+                <button type="submit" class="save-btn" id="save-unit-settings-btn">ذخیره تنظیمات</button>
+              </div>
+            </form>
           </div>
         </section>
       </main>
