@@ -1,39 +1,67 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>لیست دروس ارائه شده</title>
-    <link rel="stylesheet" href="../CSS/variables.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css">
-    <link rel="stylesheet" href="student.css">
-</head>
-<body>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="../CSS/variables.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css"
+    />
+    <link rel="stylesheet" href="student.css" />
+  </head>
+  <body>
     <div class="student-container">
-        <header class="page-header">
-            <h1>لیست دروس ارائه شده (ترم جاری)</h1>
-            <button id="logout-btn" class="logout-btn">
-                <i class="ri-logout-box-r-line"></i> خروج
-            </button>
-        </header>
+      <header class="page-header">
+        <h1>لیست دروس ارائه شده (ترم جاری)</h1>
+        <button id="logout-btn" class="logout-btn">
+          <i class="ri-logout-box-r-line"></i> خروج
+        </button>
+      </header>
 
-        <main class="main-content">
-            <div id="loading-spinner" class="loading-container hidden">
-                <div class="spinner"></div>
-                <p>در حال دریافت لیست دروس...</p>
-            </div>
+      <main class="main-content">
+        <div class="student-search-toolbar">
+          <div class="student-search-wrapper">
+            <i class="ri-search-line search-icon"></i>
+            <input
+              type="text"
+              id="course-search"
+              placeholder="جستجو در نام یا کد درس..."
+            />
+          </div>
+          <div class="student-filter-wrapper">
+            <label for="search-filter-type">جستجو بر اساس:</label>
+            <select id="search-filter-type" class="student-filter-select">
+              <option value="course_mix">نام یا کد درس</option>
+              <option value="professor_name">نام استاد</option>
+            </select>
+          </div>
+        </div>
+        <div id="loading-spinner" class="loading-container hidden">
+          <div class="spinner"></div>
+          <p>در حال دریافت لیست دروس...</p>
+        </div>
 
-            <div id="error-message" class="error-box hidden"></div>
+        <div id="error-message" class="error-box hidden"></div>
 
-            <div id="courses-grid" class="courses-grid"></div>
-            
-            <div id="empty-state" class="empty-state hidden">
-                <i class="ri-book-open-line"></i>
-                <p>در حال حاضر هیچ درسی ارائه نشده است.</p>
-            </div>
-        </main>
+        <div id="courses-grid" class="courses-grid"></div>
+
+        <div id="empty-state" class="empty-state hidden">
+          <i class="ri-book-open-line"></i>
+          <p>در حال حاضر هیچ درسی ارائه نشده است.</p>
+        </div>
+      </main>
     </div>
 
     <script type="module" src="../JS/student.main.js"></script>
-</body>
+  </body>
 </html>
