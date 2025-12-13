@@ -2,13 +2,38 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>داشبورد دانشجو</title>
-    <link rel="stylesheet" href="../css/variables.css">
-    <style>body { font-family: var(--font-family); background: var(--navy); color: white; padding: 50px; text-align: center; }</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لیست دروس ارائه شده</title>
+    <link rel="stylesheet" href="../CSS/variables.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css">
+    <link rel="stylesheet" href="student.css">
 </head>
 <body>
-    <h1>خوش آمدید، دانشجو</h1>
-    <p>این بخش در اسپرینت‌های آینده تکمیل می‌شود.</p>
-    <button onclick="localStorage.clear(); sessionStorage.clear(); window.location.href='../Login/index.html'">خروج</button>
+    <div class="student-container">
+        <header class="page-header">
+            <h1>لیست دروس ارائه شده (ترم جاری)</h1>
+            <button id="logout-btn" class="logout-btn">
+                <i class="ri-logout-box-r-line"></i> خروج
+            </button>
+        </header>
+
+        <main class="main-content">
+            <div id="loading-spinner" class="loading-container hidden">
+                <div class="spinner"></div>
+                <p>در حال دریافت لیست دروس...</p>
+            </div>
+
+            <div id="error-message" class="error-box hidden"></div>
+
+            <div id="courses-grid" class="courses-grid"></div>
+            
+            <div id="empty-state" class="empty-state hidden">
+                <i class="ri-book-open-line"></i>
+                <p>در حال حاضر هیچ درسی ارائه نشده است.</p>
+            </div>
+        </main>
+    </div>
+
+    <script type="module" src="../JS/student.main.js"></script>
 </body>
 </html>
