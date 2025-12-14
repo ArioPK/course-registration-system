@@ -10,16 +10,16 @@ import { CourseRepository } from "./services/repositories/course.repository.js";
 import { PrerequisiteRepository } from "./services/repositories/prerequisite.repository.js";
 import { SettingsRepository } from "./services/repositories/settings.repository.js";
 
-// 2. UI & Views
+// 2. UI & Views (نام‌ها اصلاح شد: حروف بزرگ رعایت شود)
 import { NotificationService } from "./ui/notification.js";
-import { LayoutView } from "./ui/views/layout.view.js";
-import { CourseManagerView } from "./ui/views/course-manager.view.js";
-import { PrerequisiteView } from "./ui/views/prerequisite.view.js";
-import { SettingsView } from "./ui/views/settings.view.js";
+import { LayoutView } from "./ui/views/LayoutView.js";
+import { CourseManagerView } from "./ui/views/CourseManagerView.js";
+import { PrerequisiteView } from "./ui/views/PrerequisiteView.js";
+import { SettingsView } from "./ui/views/SettingsView.js";
 
-// 3. Validators
-import { CourseValidator } from "./utils/validators/course.validator.js";
-import { SettingsValidator } from "./utils/validators/settings.validator.js";
+// 3. Validators (مسیر اصلاح شد: پوشه validators حذف شد)
+import { CourseValidator } from "./utils/course.validator.js";
+import { SettingsValidator } from "./utils/settings.validator.js";
 
 // 4. Controllers
 import { AdminCourseController } from "./controllers/admin-course.controller.js";
@@ -64,7 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const layoutView = new LayoutView(notificationService);
 
   // --- Module: Courses ---
-  const courseRepository = new CourseRepository(API_BASE_URL); // Repository with Mock/Real logic
+  const courseRepository = new CourseRepository(API_BASE_URL);
   const courseValidator = new CourseValidator();
   const courseView = new CourseManagerView(notificationService);
 
@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const prereqController = new PrerequisiteController(
     prereqRepository,
+    courseRepository,
     prereqView
   );
 
