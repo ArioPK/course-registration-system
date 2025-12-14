@@ -1,57 +1,126 @@
 /**
  * js/main.js
  * Responsibility: Composition Root.
- * Wires up all services, views, and controllers, then starts the application.
+ * Wires up all repositories, services, views, and controllers, then starts the application.
  */
 
+// 1. Services & Repositories
 import { AuthService } from "./services/auth.service.js";
-import { ApiService } from "./services/api.service.js";
-import { CourseValidator } from "./utils/validator.js";
-import { CourseView } from "./ui/renderer.js";
-import { CourseController } from "./controllers/course.controller.js";
+import { CourseRepository } from "./services/repositories/course.repository.js";
+import { PrerequisiteRepository } from "./services/repositories/prerequisite.repository.js";
+import { SettingsRepository } from "./services/repositories/settings.repository.js";
+
+// 2. UI & Views
+import { NotificationService } from "./ui/notification.js";
+import { LayoutView } from "./ui/views/layout.view.js";
+import { CourseManagerView } from "./ui/views/course-manager.view.js";
+import { PrerequisiteView } from "./ui/views/prerequisite.view.js";
+import { SettingsView } from "./ui/views/settings.view.js";
+
+// 3. Validators
+import { CourseValidator } from "./utils/validators/course.validator.js";
+import { SettingsValidator } from "./utils/validators/settings.validator.js";
+
+// 4. Controllers
+import { AdminCourseController } from "./controllers/admin-course.controller.js";
+import { PrerequisiteController } from "./controllers/prerequisite.controller.js";
+import { SettingsController } from "./controllers/settings.controller.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // 0. Check if we are on the admin panel page
-  // This prevents errors if the script is included globally but the element is missing.
   const adminContainer = document.querySelector(".admin-container");
   if (!adminContainer) return;
 
-  // 1. Initialize Authentication Service
+  // ---------------------------------------------------------
+  // 1. Authentication Guard (Blocking)
+  // ---------------------------------------------------------
   const authService = new AuthService();
 
-  //2. Auth Guard: Redirect if not logged in
-  // We check this BEFORE initializing other heavy services.
   if (!authService.isAuthenticated()) {
     authService.enforceAuth(); // Redirects to login
-   return; // Stop execution
+    return;
   }
 
   const userRole = authService.getRole();
-  if (userRole !== 'admin') {
-      console.warn(`Access denied for role: ${userRole}. Redirecting.`);
-      window.location.href = authService.getRedirectUrl();
-      return; // Stop execution
+  if (userRole !== "admin") {
+    console.warn(`Access denied for role: ${userRole}. Redirecting.`);
+    window.location.href = authService.getRedirectUrl();
+    return;
   }
 
-  // 3. Configuration
-  // You can switch this to production URL later
+  // ---------------------------------------------------------
+  // 2. Infrastructure Setup
+  // ---------------------------------------------------------
   const API_BASE_URL = "http://localhost:8000";
 
-  // 4. Instantiate Dependencies (Services & UI)
-  const apiService = new ApiService(API_BASE_URL);
-  const validator = new CourseValidator();
-  const view = new CourseView();
+  // Shared Notification Service (Passed to all views)
+  const notificationService = new NotificationService();
 
-  // 5. Inject Dependencies into the Controller
-  // The controller doesn't create dependencies; it receives them.
-  const controller = new CourseController(
-    apiService,
+  // ---------------------------------------------------------
+  // 3. Dependency Injection & Wiring
+  // ---------------------------------------------------------
+
+  // --- Module: Layout & Navigation ---
+  const layoutView = new LayoutView(notificationService);
+
+  // --- Module: Courses ---
+  const courseRepository = new CourseRepository(API_BASE_URL); // Repository with Mock/Real logic
+  const courseValidator = new CourseValidator();
+  const courseView = new CourseManagerView(notificationService);
+
+  const courseController = new AdminCourseController(
+    courseRepository,
     authService,
-    validator,
-    view
+    courseValidator,
+    courseView
   );
 
-  // 6. Start the Application
-  console.log("Admin Panel Initialized.");
-  controller.init();
+  // --- Module: Prerequisites ---
+  const prereqRepository = new PrerequisiteRepository(API_BASE_URL);
+  const prereqView = new PrerequisiteView(notificationService);
+
+  const prereqController = new PrerequisiteController(
+    prereqRepository,
+    prereqView
+  );
+
+  // --- Module: Settings ---
+  const settingsRepository = new SettingsRepository(API_BASE_URL);
+  const settingsValidator = new SettingsValidator();
+  const settingsView = new SettingsView(notificationService);
+
+  const settingsController = new SettingsController(
+    settingsRepository,
+    settingsValidator,
+    settingsView
+  );
+
+  // ---------------------------------------------------------
+  // 4. Global Event Binding (Layout Logic)
+  // ---------------------------------------------------------
+
+  // Handle Sidebar Navigation
+  layoutView.bindNavLinks((targetId) => {
+    localStorage.setItem("activeAdminSection", targetId);
+    layoutView.setActiveSection(targetId);
+  });
+
+  // Handle Logout
+  layoutView.bindLogout(() => {
+    authService.logout();
+  });
+
+  // Restore Active Tab on Reload
+  const activeSection =
+    localStorage.getItem("activeAdminSection") || "course-management";
+  layoutView.setActiveSection(activeSection);
+
+  // ---------------------------------------------------------
+  // 5. Start Application Modules
+  // ---------------------------------------------------------
+  console.log("Admin Panel Initialized (Modular Architecture).");
+
+  courseController.init();
+  prereqController.init();
+  settingsController.init();
 });

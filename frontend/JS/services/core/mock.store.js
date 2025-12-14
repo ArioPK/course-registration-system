@@ -1,0 +1,85 @@
+/**
+ * js/services/core/mock.store.js
+ */
+export const mockStore = {
+    courses: [
+      {
+        id: 1,
+        code: "CS101",
+        name: "مبانی کامپیوتر",
+        units: 3,
+        department: "کامپیوتر",
+        semester: "1403-1",
+        professor_name: "دکتر رضایی",
+        day_of_week: "SAT",
+        start_time: "08:00",
+        end_time: "09:30",
+        location: "کلاس 101",
+        capacity: 40,
+        enrolled: 35,
+      },
+      {
+        id: 2,
+        code: "CS102",
+        name: "برنامه‌نویسی پیشرفته",
+        units: 3,
+        department: "کامپیوتر",
+        semester: "1403-1",
+        professor_name: "دکتر احمدی",
+        day_of_week: "MON",
+        start_time: "10:00",
+        end_time: "11:30",
+        location: "سایت کامپیوتر",
+        capacity: 30,
+        enrolled: 28,
+      },
+      {
+        id: 3,
+        code: "MATH101",
+        name: "ریاضی عمومی ۱",
+        units: 3,
+        department: "ریاضی",
+        semester: "1403-1",
+        professor_name: "دکتر مریمی",
+        day_of_week: "SUN",
+        start_time: "14:00",
+        end_time: "16:00",
+        location: "تالار ۱",
+        capacity: 50,
+        enrolled: 12,
+      },
+      {
+        id: 4,
+        code: "PHYS101",
+        name: "فیزیک ۱",
+        units: 3,
+        department: "فیزیک",
+        semester: "1403-1",
+        professor_name: "دکتر کمالی",
+        day_of_week: "WED",
+        start_time: "08:00",
+        end_time: "10:00",
+        location: "آزمایشگاه فیزیک",
+        capacity: 35,
+        enrolled: 35,
+      },
+    ],
+  
+    prerequisites: [
+      {
+        id: 1,
+        target_course_id: 2,
+        prerequisite_course_id: 1,
+      },
+      {
+        id: 2,
+        target_course_id: 4,
+        prerequisite_course_id: 3,
+      },
+    ],
+  
+    unitConfig: {
+      min_units: 12,
+      max_units: 20,
+    },
+  };
