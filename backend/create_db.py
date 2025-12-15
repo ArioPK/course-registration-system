@@ -1,15 +1,15 @@
+# backend/create_db.py
 
-from backend.app.database import Base, engine  # type: ignore[import]
-from backend.app.models import admin  # noqa: F401  # ensure Admin model is imported
-from backend.app.models import course  # noqa: F401  # ensure Course model is imported
+from backend.app.database import Base, engine
 
-def init_db() -> None:
-    """
-    Initialize the database by creating all tables defined on Base subclasses.
-    """
+# Import models so they are registered with Base.metadata
+from backend.app.models.admin import Admin  # noqa: F401
+from backend.app.models.course import Course  # noqa: F401
+from backend.app.models.student import Student  # noqa: F401
+
+def main() -> None:
     Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created successfully.")
-
+    print("Database tables created successfully.")
 
 if __name__ == "__main__":
-    init_db()
+    main()
