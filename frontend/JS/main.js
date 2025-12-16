@@ -10,14 +10,14 @@ import { CourseRepository } from "./services/repositories/course.repository.js";
 import { PrerequisiteRepository } from "./services/repositories/prerequisite.repository.js";
 import { SettingsRepository } from "./services/repositories/settings.repository.js";
 
-// 2. UI & Views (نام‌ها اصلاح شد: حروف بزرگ رعایت شود)
+
 import { NotificationService } from "./ui/notification.js";
 import { LayoutView } from "./ui/views/LayoutView.js";
 import { CourseManagerView } from "./ui/views/CourseManagerView.js";
 import { PrerequisiteView } from "./ui/views/PrerequisiteView.js";
 import { SettingsView } from "./ui/views/SettingsView.js";
 
-// 3. Validators (مسیر اصلاح شد: پوشه validators حذف شد)
+
 import { CourseValidator } from "./utils/course.validator.js";
 import { SettingsValidator } from "./utils/settings.validator.js";
 
