@@ -1,31 +1,53 @@
-# backend/tests/test_unit_limit_policy.py
-
-import pytest
+from fastapi import APIRouter, Depends, HTTPException, status, Body
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
-from backend.app.models.unit_limit_policy import UnitLimitPolicy
-from backend.seed_unit_limit_policy import ensure_unit_limit_policy
+from backend.app.database import get_db
+from backend.app.dependencies.auth import get_current_admin
+from backend.app.models.admin import Admin
+from backend.app.schemas.unit_limits import UnitLimitRead, UnitLimitUpdate
+from backend.app.services.unit_limit_service import (
+    get_unit_limits_service,
+    update_unit_limits_service,
+    InvalidUnitLimitRangeError,
+)
+
+router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
-def test_seed_creates_singleton_row(db_session: Session) -> None:
-    assert db_session.get(UnitLimitPolicy, 1) is None
-
-    policy = ensure_unit_limit_policy(db_session, min_units=0, max_units=30)
-    assert policy.id == 1
-    assert policy.min_units == 0
-    assert policy.max_units == 30
-
-    # second run is idempotent (no duplicates)
-    policy2 = ensure_unit_limit_policy(db_session, min_units=0, max_units=30)
-    assert policy2.id == 1
-
-    count = db_session.query(UnitLimitPolicy).count()
-    assert count == 1
+@router.get("/unit-limits", response_model=UnitLimitRead)
+def get_unit_limits(
+    db: Session = Depends(get_db),
+    _current_admin: Admin = Depends(get_current_admin),
+) -> UnitLimitRead:
+    policy = get_unit_limits_service(db)
+    return UnitLimitRead.model_validate(policy)
 
 
-def test_seed_rejects_invalid_values(db_session: Session) -> None:
-    with pytest.raises(ValueError):
-        ensure_unit_limit_policy(db_session, min_units=-1, max_units=30)
+@router.put("/unit-limits", response_model=UnitLimitRead, status_code=status.HTTP_200_OK)
+def update_unit_limits(
+    payload: dict = Body(...),  # validate manually to return 400 instead of 422
+    db: Session = Depends(get_db),
+    _current_admin: Admin = Depends(get_current_admin),
+) -> UnitLimitRead:
+    try:
+        data = UnitLimitUpdate.model_validate(payload)
+    except ValidationError as e:
+        # Make it JSON-safe (Pydantic v2 includes ValueError objects in ctx)
+        safe_errors = []
+        for err in e.errors():
+            safe_errors.append(
+                {
+                    "loc": err.get("loc"),
+                    "msg": err.get("msg"),
+                    "type": err.get("type"),
+                }
+            )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=safe_errors)
 
-    with pytest.raises(ValueError):
-        ensure_unit_limit_policy(db_session, min_units=10, max_units=5)
+    try:
+        policy = update_unit_limits_service(db, data.min_units, data.max_units)
+    except InvalidUnitLimitRangeError as ex:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ex))
+
+    return UnitLimitRead.model_validate(policy)

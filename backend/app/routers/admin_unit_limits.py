@@ -1,6 +1,4 @@
-# backend/app/routers/admin_unit_limits.py
-
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Body
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -14,39 +12,42 @@ from backend.app.services.unit_limit_service import (
     InvalidUnitLimitRangeError,
 )
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
-@router.get("/unit-limits", response_model=UnitLimitRead, status_code=status.HTTP_200_OK)
+@router.get("/unit-limits", response_model=UnitLimitRead)
 def get_unit_limits(
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),  # enforced admin auth
+    _current_admin: Admin = Depends(get_current_admin),
 ) -> UnitLimitRead:
     policy = get_unit_limits_service(db)
-    return policy
+    return UnitLimitRead.model_validate(policy)
 
 
 @router.put("/unit-limits", response_model=UnitLimitRead, status_code=status.HTTP_200_OK)
 def update_unit_limits(
-    payload: dict = Body(...),  # validate manually to return 400 instead of FastAPI's 422
+    payload: dict = Body(...),  # validate manually to return 400 instead of 422
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),  # enforced admin auth
+    _current_admin: Admin = Depends(get_current_admin),
 ) -> UnitLimitRead:
-    # Convert Pydantic validation errors (schema-level) into HTTP 400 for this endpoint.
     try:
-        data = UnitLimitUpdate.model_validate(payload)  # Pydantic v2
+        data = UnitLimitUpdate.model_validate(payload)
     except ValidationError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=e.errors(),
-        )
+        # Make it JSON-safe (Pydantic v2 includes ValueError objects in ctx)
+        safe_errors = []
+        for err in e.errors():
+            safe_errors.append(
+                {
+                    "loc": err.get("loc"),
+                    "msg": err.get("msg"),
+                    "type": err.get("type"),
+                }
+            )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=safe_errors)
 
-    # Service-level validation (source of truth)
     try:
         policy = update_unit_limits_service(db, data.min_units, data.max_units)
-        return policy
-    except InvalidUnitLimitRangeError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
-        )
+    except InvalidUnitLimitRangeError as ex:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ex))
+
+    return UnitLimitRead.model_validate(policy)
