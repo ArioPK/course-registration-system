@@ -1,10 +1,11 @@
 # backend/app/main.py
 
 from fastapi import FastAPI # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
 
 from backend.app.config.settings import settings
 from backend.app.routers import auth, course
-from fastapi.middleware.cors import CORSMiddleware # type: ignore
+
 
 app = FastAPI(title=settings.APP_NAME)
 
