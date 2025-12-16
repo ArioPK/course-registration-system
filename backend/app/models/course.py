@@ -6,8 +6,12 @@ from datetime import datetime, time
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Time # type: ignore
 from sqlalchemy.sql import func # type: ignore
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.associationproxy import association_proxy
 
 from ..database import Base  # relative import from app.database
+
+from backend.app.models.course_prerequisite import CoursePrerequisite
 
 
 class Course(Base):
@@ -53,6 +57,29 @@ class Course(Base):
     semester: str = Column(String(20), nullable=False)             # e.g. “2025-1”
 #    prerequisites: Optional[List[int]] = None # List of course IDs that are prerequisites
 
+    # Links where THIS course requires others
+    prerequisite_links = relationship(
+        "CoursePrerequisite",
+        foreign_keys=[CoursePrerequisite.course_id],
+        back_populates="course",
+        cascade="all, delete-orphan",
+    )
+
+#   Direct list of prerequisite Course objects
+    prerequisites = association_proxy("prerequisite_links", "prerequisite")
+
+#   Links where THIS course is a prerequisite for others
+    dependent_links = relationship(
+        "CoursePrerequisite",
+        foreign_keys="CoursePrerequisite.prereq_course_id",
+        back_populates="prerequisite",
+        cascade="all, delete-orphan",
+    )
+
+#   Direct list of dependent Course objects
+    is_prerequisite_for = association_proxy("dependent_links", "course")
+
+
 
     def __repr__(self) -> str:
         return (
@@ -73,3 +100,6 @@ class Course(Base):
             f"semester={self.semester!r}"
 #            f"prerequisites={self.prerequisites!r}>"
         )
+
+
+
