@@ -6,8 +6,10 @@ from datetime import datetime, time
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Time # type: ignore
 from sqlalchemy.sql import func # type: ignore
+from sqlalchemy.sql import text
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
+
 
 from ..database import Base  # relative import from app.database
 
