@@ -17,6 +17,15 @@ from backend.app.services.course_service import (
     CourseNotFoundError,
     DuplicateCourseCodeError,
 )
+from backend.app.schemas.prerequisite import PrerequisiteCreate, PrerequisiteRead
+from backend.app.services.prerequisite_service import (
+    add_prerequisite_service,
+    list_prerequisites_service,
+    remove_prerequisite_service,
+    PrerequisiteNotFoundError,
+    DuplicatePrerequisiteError,
+    InvalidPrerequisiteRelationError,
+)
 from backend.app.models.admin import Admin
 from backend.app.dependencies.auth import get_current_admin
 
@@ -106,3 +115,63 @@ def delete_course(
             detail="Course not found",
         )
 
+
+@router.post(
+    "/{course_id}/prerequisites",
+    response_model=PrerequisiteRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_course_prerequisite(
+    course_id: int,
+    payload: PrerequisiteCreate,
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(get_current_admin),
+):
+    # Guard against mismatched body/path (helps avoid accidental wrong linking)
+    if payload.course_id != course_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="course_id in path and body must match",
+        )
+
+    try:
+        link = add_prerequisite_service(db, course_id=course_id, prereq_course_id=payload.prereq_course_id)
+        return link
+    except InvalidPrerequisiteRelationError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    except DuplicatePrerequisiteError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    except PrerequisiteNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.get(
+    "/{course_id}/prerequisites",
+    response_model=List[PrerequisiteRead],
+)
+def list_course_prerequisites(
+    course_id: int,
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(get_current_admin),
+):
+    try:
+        return list_prerequisites_service(db, course_id=course_id)
+    except PrerequisiteNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.delete(
+    "/{course_id}/prerequisites/{prereq_course_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def remove_course_prerequisite(
+    course_id: int,
+    prereq_course_id: int,
+    db: Session = Depends(get_db),
+    current_admin: Admin = Depends(get_current_admin),
+):
+    try:
+        remove_prerequisite_service(db, course_id=course_id, prereq_course_id=prereq_course_id)
+        return None
+    except PrerequisiteNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
