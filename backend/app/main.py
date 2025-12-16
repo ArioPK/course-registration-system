@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from backend.app.config.settings import settings
 from backend.app.routers import auth, course
 from backend.app.routers.admin_unit_limits import router as admin_unit_limits_router
+from backend.app.routers.student_courses import router as student_courses_router
 
 
 app = FastAPI(title=settings.APP_NAME)
@@ -24,4 +25,5 @@ app.add_middleware(
 
 app.include_router(auth.router )
 app.include_router(course.router, prefix="/api") 
-app.include_router(admin_unit_limits_router, prefix="/api")
+app.include_router(admin_unit_limits_router)
+app.include_router(student_courses_router)
