@@ -14,10 +14,12 @@ from backend.app.models.admin import Admin
 from backend.app.schemas.auth import AdminLoginRequest, TokenResponse # type: ignore
 from backend.app.models.student import Student
 from backend.app.schemas.auth import StudentLoginRequest, TokenResponse
+from backend.app.dependencies.auth import get_current_student
 from backend.app.models.professor import Professor
 from backend.app.schemas.auth import ProfessorLoginRequest, TokenResponse
 from backend.app.services.security import verify_password
 from backend.app.services.jwt import create_access_token
+
 
 # to test rout
 from ..dependencies.auth import get_current_admin
@@ -28,6 +30,17 @@ router = APIRouter(
     prefix="/auth",
     tags=["auth"],
 )
+
+
+@router.get("/student/me")
+def student_me(current_student: Student = Depends(get_current_student)):
+    """
+    TEMP: verify student auth dependency works end-to-end.
+    """
+    return {
+        "student_number": current_student.student_number,
+        "full_name": current_student.full_name,
+    }
 
 
 @router.post("/professor/login", response_model=TokenResponse)
