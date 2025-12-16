@@ -1,10 +1,11 @@
 # backend/tests/test_auth_login.py
 
 import uuid
-from typing import Dict
-
 import pytest
+
+from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
+from typing import Dict
 
 from backend.app.models.admin import Admin
 from backend.app.services.security import get_password_hash
@@ -92,7 +93,7 @@ def test_admin_login_unknown_username(client, db_session: Session) -> None:
     assert data.get("detail") == "Incorrect username or password"
 
 
-def test_admin_login_token_payload(client, db_session: Session, admin_credentials: Dict[str, str]) -> None:
+def test_admin_login_token_payload(client: TestClient, db_session: Session, admin_credentials: Dict[str, str]) -> None:
     """
     After successful login, the JWT payload should contain the correct subject (sub).
     """
@@ -110,3 +111,28 @@ def test_admin_login_token_payload(client, db_session: Session, admin_credential
 
     payload = decode_access_token(token)
     assert payload.get("sub") == admin_credentials["username"]
+
+
+def test_admin_login_token_contains_admin_role(client: TestClient, db_session: Session) -> None:
+    suffix = uuid.uuid4().hex[:8]
+    username = f"admin_{suffix}"
+    password = "password123"
+
+    admin = Admin(
+        username=username,
+        password_hash=get_password_hash(password),
+        national_id=f"nid_{suffix}",
+        email=f"{username}@example.com",
+        is_active=True,
+    )
+    db_session.add(admin)
+    db_session.commit()
+
+    resp = client.post("/auth/login", json={"username": username, "password": password})
+    assert resp.status_code == 200, resp.text
+
+    token = resp.json()["access_token"]
+    payload = decode_access_token(token)
+
+    assert payload["sub"] == username
+    assert payload["role"] == "admin"

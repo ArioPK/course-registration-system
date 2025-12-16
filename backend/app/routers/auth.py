@@ -107,8 +107,8 @@ async def login(
     )
 
     access_token = create_access_token(
-        data={"sub": admin.username},
-        expires_delta=access_token_expires,
+        data={"sub": admin.username, "role": "admin"},
+        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
     return TokenResponse(
