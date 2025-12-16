@@ -18,3 +18,8 @@ class TokenResponse(BaseModel):
 class StudentLoginRequest(BaseModel):
     student_number: str
     password: str
+
+
+class ProfessorLoginRequest(BaseModel):
+    professor_code: str
+    password: str
