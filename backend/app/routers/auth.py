@@ -17,6 +17,7 @@ from backend.app.schemas.auth import StudentLoginRequest, TokenResponse
 from backend.app.dependencies.auth import get_current_student
 from backend.app.models.professor import Professor
 from backend.app.schemas.auth import ProfessorLoginRequest, TokenResponse
+from backend.app.dependencies.auth import get_current_professor
 from backend.app.services.security import verify_password
 from backend.app.services.jwt import create_access_token
 
@@ -190,3 +191,10 @@ async def read_current_admin(
         "is_active": getattr(current_admin, "is_active", None),
     }
 
+
+@router.get("/professor/me")
+def professor_me(current_professor: Professor = Depends(get_current_professor)):
+    return {
+        "professor_code": current_professor.professor_code,
+        "full_name": current_professor.full_name,
+    }
