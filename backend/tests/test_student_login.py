@@ -1,10 +1,12 @@
 # backend/tests/test_student_login.py
 import uuid
 import pytest
+
 from sqlalchemy.orm import Session
 
 from backend.app.models.student import Student
 from backend.app.services.security import get_password_hash
+from backend.app.services.jwt import decode_access_token
 
 @pytest.fixture
 def student_credentials(db_session: Session) -> dict:
@@ -29,3 +31,14 @@ def student_credentials(db_session: Session) -> dict:
     db_session.commit()
 
     return {"student_number": student_number, "password": plain_password}
+
+
+def test_student_login_token_contains_student_role(client, student_credentials) -> None:
+    resp = client.post("/auth/student/login", json=student_credentials)
+    assert resp.status_code == 200, resp.text
+
+    token = resp.json()["access_token"]
+    payload = decode_access_token(token)
+
+    assert payload["sub"] == student_credentials["student_number"]
+    assert payload["role"] == "student"

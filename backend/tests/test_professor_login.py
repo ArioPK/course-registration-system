@@ -1,5 +1,6 @@
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -12,7 +13,11 @@ def _unique_suffix() -> str:
     return uuid.uuid4().hex[:8]
 
 
-def test_professor_login_success(client: TestClient, db_session: Session) -> None:
+@pytest.fixture
+def professor_credentials(db_session: Session) -> dict:
+    """
+    Creates a unique professor in the test DB and returns valid login credentials.
+    """
     suffix = _unique_suffix()
     code = f"ptest_{suffix}"
     password = "prof_password123"
@@ -27,10 +32,14 @@ def test_professor_login_success(client: TestClient, db_session: Session) -> Non
     db_session.add(prof)
     db_session.commit()
 
-    response = client.post(
-        "/auth/professor/login",
-        json={"professor_code": code, "password": password},
-    )
+    return {"professor_code": code, "password": password}
+
+
+def test_professor_login_success(
+    client: TestClient, professor_credentials: dict
+) -> None:
+    response = client.post("/auth/professor/login", json=professor_credentials)
+
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["token_type"] == "bearer"
@@ -69,31 +78,14 @@ def test_professor_login_unknown_professor(client: TestClient) -> None:
     assert "detail" in response.json()
 
 
-def test_professor_login_token_contains_role_and_sub(
-    client: TestClient, db_session: Session
+def test_professor_login_token_contains_professor_role(
+    client: TestClient, professor_credentials: dict
 ) -> None:
-    suffix = _unique_suffix()
-    code = f"ptest_{suffix}"
-    password = "prof_password123"
+    resp = client.post("/auth/professor/login", json=professor_credentials)
+    assert resp.status_code == 200, resp.text
 
-    prof = Professor(
-        professor_code=code,
-        full_name="Prof Test",
-        email=f"prof_{suffix}@example.com",
-        password_hash=get_password_hash(password),
-        is_active=True,
-    )
-    db_session.add(prof)
-    db_session.commit()
-
-    response = client.post(
-        "/auth/professor/login",
-        json={"professor_code": code, "password": password},
-    )
-    assert response.status_code == 200
-
-    token = response.json()["access_token"]
+    token = resp.json()["access_token"]
     payload = decode_access_token(token)
 
-    assert payload["sub"] == code
+    assert payload["sub"] == professor_credentials["professor_code"]
     assert payload["role"] == "professor"
