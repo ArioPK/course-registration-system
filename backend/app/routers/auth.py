@@ -12,6 +12,8 @@ from backend.app.config.settings import settings
 from backend.app.database import get_db
 from backend.app.models.admin import Admin
 from backend.app.schemas.auth import AdminLoginRequest, TokenResponse # type: ignore
+from backend.app.models.student import Student
+from backend.app.schemas.auth import StudentLoginRequest, TokenResponse
 from backend.app.services.security import verify_password
 from backend.app.services.jwt import create_access_token
 
@@ -74,6 +76,51 @@ async def login(
         access_token=access_token,
         token_type="bearer",
     )
+
+
+@router.post("/student/login", response_model=TokenResponse)
+async def student_login(
+    credentials: StudentLoginRequest,
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    # 1) Lookup student
+    student = (
+        db.query(Student)
+        .filter(Student.student_number == credentials.student_number)
+        .first()
+    )
+
+    # Use same error message for unknown user and wrong password
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect student number or password",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    if not student:
+        raise credentials_exception
+
+    # 2) Check active
+    if not student.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Student account is inactive",
+        )
+
+    # 3) Verify password
+    if not verify_password(credentials.password, student.password_hash):
+        raise credentials_exception
+
+    # 4) Create JWT
+    expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    token = create_access_token(
+        data={"sub": student.student_number, "role": "student"},
+        expires_delta=expires_delta,
+    )
+
+    return TokenResponse(access_token=token, token_type="bearer")
+
+
 
 # "who am I?" test
 @router.get("/me")

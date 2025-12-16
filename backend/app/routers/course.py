@@ -1,6 +1,5 @@
 # backend/app/routers/course.py
 
-# backend/app/routers/course.py
 
 from typing import List
 
@@ -92,7 +91,7 @@ def update_course(
         )
 
 
-@router.delete("/{course_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{course_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_course(
     course_id: int,
     db: Session = Depends(get_db),
@@ -107,4 +106,3 @@ def delete_course(
             detail="Course not found",
         )
 
-    return {"detail": "Course deleted successfully"}

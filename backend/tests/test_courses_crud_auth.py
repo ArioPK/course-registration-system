@@ -52,18 +52,17 @@ def _auth_headers(token: str) -> Dict[str, str]:
 
 
 def _sample_course_payload(code: str = "CS101") -> Dict:
-    """
-    Return a minimal valid CourseCreate payload.
-    Adjust day_of_week value to match DayOfWeek enum values.
-    """
     return {
         "code": code,
         "name": "Intro to Computer Science",
+        "units": 3,                 
+        "department": "CS",         
+        "semester": "1401-1",              
         "capacity": 30,
         "professor_name": "Dr. Test",
-        "day_of_week": "MON",  # must match enum values
-        "start_time": "09:00",
-        "end_time": "10:30",
+        "day_of_week": "MON",
+        "start_time": "09:00:00",
+        "end_time": "10:30:00",
         "location": "Room 101",
     }
 
@@ -72,7 +71,7 @@ def test_create_course_with_valid_token(client: TestClient, db_session: Session)
     token = create_admin_and_get_token(client, db_session)
     payload = _sample_course_payload(code=f"CS{uuid.uuid4().hex[:4]}")
 
-    response = client.post("/courses", json=payload, headers=_auth_headers(token))
+    response = client.post("/api/courses", json=payload, headers=_auth_headers(token))
 
     assert response.status_code == 201, response.text
     data = response.json()
@@ -81,6 +80,14 @@ def test_create_course_with_valid_token(client: TestClient, db_session: Session)
     assert data["name"] == payload["name"]
     assert data["capacity"] == payload["capacity"]
     assert data["professor_name"] == payload["professor_name"]
+    assert data["day_of_week"] == payload["day_of_week"]
+    assert data["start_time"] == payload["start_time"]
+    assert data["end_time"] == payload["end_time"]
+    assert data["location"] == payload["location"]
+    assert data["units"] == payload["units"]
+    assert data["department"] == payload["department"]
+    assert data["semester"] == payload["semester"]
+    
 
 
 def test_list_courses_includes_created_course(client: TestClient, db_session: Session) -> None:
@@ -88,10 +95,10 @@ def test_list_courses_includes_created_course(client: TestClient, db_session: Se
     course_code = f"CS{uuid.uuid4().hex[:4]}"
     payload = _sample_course_payload(code=course_code)
 
-    create_resp = client.post("/courses", json=payload, headers=_auth_headers(token))
+    create_resp = client.post("/api/courses", json=payload, headers=_auth_headers(token))
     assert create_resp.status_code == 201, create_resp.text
 
-    list_resp = client.get("/courses", headers=_auth_headers(token))
+    list_resp = client.get("/api/courses", headers=_auth_headers(token))
     assert list_resp.status_code == 200, list_resp.text
 
     courses = list_resp.json()
@@ -104,7 +111,7 @@ def test_update_course_changes_data(client: TestClient, db_session: Session) -> 
     course_code = f"CS{uuid.uuid4().hex[:4]}"
     payload = _sample_course_payload(code=course_code)
 
-    create_resp = client.post("/courses", json=payload, headers=_auth_headers(token))
+    create_resp = client.post("/api/courses", json=payload, headers=_auth_headers(token))
     assert create_resp.status_code == 201, create_resp.text
     created = create_resp.json()
     course_id = created["id"]
@@ -115,7 +122,7 @@ def test_update_course_changes_data(client: TestClient, db_session: Session) -> 
     }
 
     update_resp = client.put(
-        f"/courses/{course_id}",
+        f"/api/courses/{course_id}",
         json=update_payload,
         headers=_auth_headers(token),
     )
@@ -134,21 +141,21 @@ def test_delete_course_removes_it(client: TestClient, db_session: Session) -> No
     course_code = f"CS{uuid.uuid4().hex[:4]}"
     payload = _sample_course_payload(code=course_code)
 
-    create_resp = client.post("/courses", json=payload, headers=_auth_headers(token))
+    create_resp = client.post("/api/courses", json=payload, headers=_auth_headers(token))
     assert create_resp.status_code == 201, create_resp.text
     course_id = create_resp.json()["id"]
 
-    delete_resp = client.delete(f"/courses/{course_id}", headers=_auth_headers(token))
+    delete_resp = client.delete(f"/api/courses/{course_id}", headers=_auth_headers(token))
     assert delete_resp.status_code in (200, 204)
 
     # Verify it is actually gone
-    get_resp = client.get(f"/courses/{course_id}", headers=_auth_headers(token))
+    get_resp = client.get(f"/api/courses/{course_id}", headers=_auth_headers(token))
     assert get_resp.status_code == 404
 
 
 def test_course_endpoints_require_token(client: TestClient, db_session: Session) -> None:
     # No Authorization header
-    resp = client.get("/courses")
+    resp = client.get("/api/courses")
     assert resp.status_code == 401
     # Depending on your implementation, this may be "Not authenticated"
     assert "detail" in resp.json()
@@ -156,7 +163,7 @@ def test_course_endpoints_require_token(client: TestClient, db_session: Session)
 
 def test_course_endpoints_reject_invalid_token(client: TestClient, db_session: Session) -> None:
     headers = {"Authorization": "Bearer invalidtoken"}
-    resp = client.get("/courses", headers=headers)
+    resp = client.get("/api/courses", headers=headers)
 
     assert resp.status_code == 401
     assert "detail" in resp.json()

@@ -13,3 +13,8 @@ class AdminLoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
+
+
+class StudentLoginRequest(BaseModel):
+    student_number: str
+    password: str
