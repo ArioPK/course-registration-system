@@ -14,6 +14,8 @@ from backend.app.models.admin import Admin
 from backend.app.schemas.auth import AdminLoginRequest, TokenResponse # type: ignore
 from backend.app.models.student import Student
 from backend.app.schemas.auth import StudentLoginRequest, TokenResponse
+from backend.app.models.professor import Professor
+from backend.app.schemas.auth import ProfessorLoginRequest, TokenResponse
 from backend.app.services.security import verify_password
 from backend.app.services.jwt import create_access_token
 
@@ -26,6 +28,43 @@ router = APIRouter(
     prefix="/auth",
     tags=["auth"],
 )
+
+
+@router.post("/professor/login", response_model=TokenResponse)
+async def professor_login(
+    credentials: ProfessorLoginRequest,
+    db: Session = Depends(get_db),
+) -> TokenResponse:
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Incorrect code or password",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    professor = (
+        db.query(Professor)
+        .filter(Professor.professor_code == credentials.professor_code)
+        .first()
+    )
+    if not professor:
+        raise credentials_exception
+
+    if not professor.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive professor account",
+        )
+
+    if not verify_password(credentials.password, professor.password_hash):
+        raise credentials_exception
+
+    expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": professor.professor_code, "role": "professor"},
+        expires_delta=expires_delta,
+    )
+
+    return TokenResponse(access_token=access_token, token_type="bearer")
 
 
 @router.post("/login", response_model=TokenResponse)
