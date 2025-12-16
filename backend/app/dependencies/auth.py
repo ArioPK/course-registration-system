@@ -5,12 +5,13 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer, OAuth2PasswordBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.models.admin import Admin
 from backend.app.models.student import Student
+from backend.app.models.professor import Professor
 from backend.app.services.jwt import decode_access_token, InvalidTokenError
 
 
@@ -205,3 +206,57 @@ async def get_current_admin(
 
     # 4) Return the current admin
     return admin
+
+
+bearer_professor_scheme = HTTPBearer(auto_error=False)
+
+
+def _raise_unauthorized(detail: str = "Could not validate credentials") -> None:
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+async def get_current_professor(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_professor_scheme),
+    db: Session = Depends(get_db),
+) -> Professor:
+    if credentials is None or not credentials.credentials:
+        _raise_unauthorized("Not authenticated")
+
+    token = credentials.credentials
+
+    try:
+        payload = decode_access_token(token)
+    except Exception:
+        _raise_unauthorized("Invalid or expired token")
+
+    sub = payload.get("sub")
+    role = payload.get("role")
+
+    if not sub or not role:
+        _raise_unauthorized("Token missing required claims")
+
+    if role != "professor":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions",
+        )
+
+    professor = (
+        db.query(Professor)
+        .filter(Professor.professor_code == sub)
+        .first()
+    )
+    if professor is None:
+        _raise_unauthorized("Professor not found")
+
+    if hasattr(professor, "is_active") and professor.is_active is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive professor account",
+        )
+
+    return professor
