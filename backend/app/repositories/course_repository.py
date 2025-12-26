@@ -5,9 +5,42 @@ from __future__ import annotations
 from typing import List, Optional
 
 from sqlalchemy.orm import Session
+from sqlalchemy import or_, func
+
 
 from backend.app.models.course import Course
 from backend.app.schemas.course import CourseCreate, CourseUpdate
+
+
+def list_courses_filtered(
+    db: Session,
+    *,
+    skip: int = 0,
+    limit: int = 100,
+    q: Optional[str] = None,
+    only_active: bool = True,
+) -> List[Course]:
+    query = db.query(Course)
+
+    # "Offered courses" -> usually means active courses only
+    if only_active and hasattr(Course, "is_active"):
+        query = query.filter(Course.is_active.is_(True))
+
+    if q:
+        term = q.strip().lower()
+        if term:
+            pattern = f"%{term}%"
+            query = query.filter(
+                or_(
+                    func.lower(Course.name).like(pattern),
+                    func.lower(Course.professor_name).like(pattern),
+                )
+            )
+
+    # stable ordering for pagination
+    query = query.order_by(Course.id.asc())
+
+    return query.offset(skip).limit(limit).all()
 
 
 def get_course_by_id(db: Session, course_id: int) -> Optional[Course]:

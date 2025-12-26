@@ -3,7 +3,7 @@ from collections.abc import Generator
 from sqlalchemy import create_engine # type: ignore
 from sqlalchemy.orm import sessionmaker # type: ignore
 
-from ..config.settings import settings  # relative import from app.config
+from backend.app.config.settings import settings  
 
 
 # Create the SQLAlchemy engine using the DATABASE_URL from settings
