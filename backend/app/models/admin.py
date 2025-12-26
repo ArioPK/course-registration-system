@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.sql import func
 
-from ..database import Base  # relative import from app.database
+from backend.app.database import Base  
 
 
 class Admin(Base):

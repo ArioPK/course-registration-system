@@ -11,7 +11,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.ext.associationproxy import association_proxy
 
 
-from ..database import Base  # relative import from app.database
+from backend.app.database import Base   
 
 from backend.app.models.course_prerequisite import CoursePrerequisite
 

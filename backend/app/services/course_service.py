@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import List
+from typing import Optional,List
 
 from sqlalchemy.orm import Session
 
 from backend.app.models.course import Course
+from backend.app.repositories.course_repository import list_courses_filtered
 from backend.app.schemas.course import CourseCreate, CourseUpdate
 from backend.app.repositories.course_repository import (
     get_course_by_id,
@@ -17,6 +18,19 @@ from backend.app.repositories.course_repository import (
     delete_course,
 )
 
+
+def list_student_catalog_courses_service(
+    db: Session,
+    *,
+    q: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 100,
+) -> List[Course]:
+    # normalize empty/whitespace queries to None
+    if q is not None and not q.strip():
+        q = None
+
+    return list_courses_filtered(db, q=q, skip=skip, limit=limit, only_active=True)
 
 class CourseNotFoundError(Exception):
     """Raised when a course with the given ID does not exist."""
