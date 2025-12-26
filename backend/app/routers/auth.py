@@ -24,6 +24,12 @@ from backend.app.schemas.auth import (
     TokenResponse,
     UserContext,
 )
+from backend.app.services.auth_service import (
+    authenticate_any_role,
+    InvalidCredentialsError,
+    InactiveAccountError,
+)
+from backend.app.schemas.auth import UserContext
 from backend.app.services.jwt import create_access_token
 from backend.app.services.security import verify_password
 
@@ -92,21 +98,21 @@ async def professor_login(
 
 @router.post("/login", response_model=TokenResponse)
 async def login(
-    credentials: AdminLoginRequest,
+    credentials: AdminLoginRequest,  # must remain {username, password}
     db: Session = Depends(get_db),
 ) -> TokenResponse:
     """
-    Admin login endpoint.
+    Unified login shim (backend-only):
 
-    - Accepts username & password.
-    - Verifies credentials against the Admin table.
-    - Returns a JWT access token if valid.
+    Accepts {username, password} and authenticates by precedence:
+      1) Admin.username == username
+      2) Student.student_number == username
+      3) Professor.professor_code == username
+
+    Collision behavior:
+      - Admin wins. If an Admin exists with this identifier, we do NOT try Student/Professor.
+        Wrong password returns 401 (generic) even if a Student/Professor with the same identifier exists.
     """
-    admin = (
-        db.query(Admin)
-        .filter(Admin.username == credentials.username)
-        .first()
-    )
 
     invalid_credentials_exc = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -114,25 +120,28 @@ async def login(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if admin is None:
+    try:
+        auth = authenticate_any_role(db, credentials.username, credentials.password)
+    except InactiveAccountError:
+        # Keep consistent with existing pattern (student/prof dedicated endpoints use 403).
+        # Use a generic message to avoid revealing role.
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Account is inactive",
+        )
+    except InvalidCredentialsError:
         raise invalid_credentials_exc
 
-    if not verify_password(credentials.password, admin.password_hash):
-        raise invalid_credentials_exc
-
+    expires_delta = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": admin.username, "role": "admin"},
-        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+        data={"sub": auth.identifier, "role": auth.role},
+        expires_delta=expires_delta,
     )
 
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        user=UserContext(
-            role="admin",
-            identifier=admin.username,
-            id=getattr(admin, "id", None),
-        ),
+        user=UserContext(role=auth.role, identifier=auth.identifier, id=auth.id),
     )
 
 
