@@ -1,11 +1,13 @@
+/**
+ * js/utils/validators/course.validator.js
+ */
 export class CourseValidator {
   /**
-    
-     * @param {Object} formData 
-     * @param {Array} existingCourses 
-     * @param {number|string|null} currentEditId 
-     * @returns {Object} 
-     */
+   * @param {Object} formData
+   * @param {Array} existingCourses
+   * @param {number|string|null} currentEditId
+   * @returns {Object} { isValid, errors: [] }
+   */
   validate(formData, existingCourses = [], currentEditId = null) {
     const errors = [];
 

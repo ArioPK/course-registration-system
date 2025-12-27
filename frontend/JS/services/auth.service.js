@@ -9,28 +9,45 @@ export class AuthService {
     // Keys used in sessionStorage
     this.KEYS = {
       TOKEN: "authToken",
-      IS_LOGGED_IN: "isAdminLoggedIn",
-      USER_DATA: "userData",
+      USER_DATA: "userData", // Stores the full user object including role and id
     };
 
-    // Redirect URLs
+    // Redirect URLs for different user roles
     this.URLS = {
       LOGIN: "../Login/index.html",
+      ADMIN_DASHBOARD: "../panel/index.html",
+      STUDENT_DASHBOARD: "../student-panel/index.html", // URL for the Student Dashboard
+      PROFESSOR_DASHBOARD: "../professor-panel/index.html", // URL for the Professor Dashboard
     };
+  }
+
+  /**
+   * Stores user authentication details upon successful login.
+   * @param {string} token - The JWT access token received from the API.
+   * @param {Object} user - The user object containing role and other details.
+   */
+  login(token, user) {
+    if (token) {
+      sessionStorage.setItem(this.KEYS.TOKEN, token);
+    }
+    if (user) {
+      sessionStorage.setItem(this.KEYS.USER_DATA, JSON.stringify(user));
+    }
   }
 
   /**
    * Checks if the user is currently authenticated.
-   * Based on the 'isAdminLoggedIn' flag in sessionStorage.
-   * @returns {boolean} True if logged in, false otherwise.
+   * Determines status based on the presence of a valid token in storage.
+   * @returns {boolean} True if a token exists, false otherwise.
    */
   isAuthenticated() {
-    return sessionStorage.getItem(this.KEYS.IS_LOGGED_IN) === "true";
+    // Direct token check is more secure than relying on a manual 'isLoggedIn' flag
+    return !!sessionStorage.getItem(this.KEYS.TOKEN);
   }
 
   /**
    * Retrieves the current access token.
-   * @returns {string|null} The JWT token or null.
+   * @returns {string|null} The JWT token or null if not found.
    */
   getToken() {
     return sessionStorage.getItem(this.KEYS.TOKEN);
@@ -51,9 +68,40 @@ export class AuthService {
   }
 
   /**
+   * Extracts the role from the stored user data.
+   * Used for access control and routing decisions.
+   * @returns {string|null} The user's role (e.g., 'admin', 'student', 'professor') or null.
+   */
+  getRole() {
+    const user = this.getUserData();
+    return user ? user.role : null;
+  }
+
+  /**
+   * Determines the appropriate dashboard URL based on the user's role.
+   * Centralizes routing logic to adhere to the Single Responsibility Principle (SRP).
+   * @returns {string} The URL of the dashboard corresponding to the user's role.
+   */
+  getRedirectUrl() {
+    const role = this.getRole();
+
+    switch (role) {
+      case "admin":
+        return this.URLS.ADMIN_DASHBOARD;
+      case "student":
+        return this.URLS.STUDENT_DASHBOARD;
+      case "professor":
+        return this.URLS.PROFESSOR_DASHBOARD;
+      default:
+        // Fallback to login if role is unknown or user is not authenticated
+        return this.URLS.LOGIN;
+    }
+  }
+
+  /**
    * Enforces the authentication guard.
-   * If the user is not logged in, redirects them to the login page immediately.
-   * Use this at the start of protected pages (like the admin panel).
+   * If the user is not authenticated, redirects them to the login page immediately.
+   * Should be called at the initialization of protected pages.
    */
   enforceAuth() {
     if (!this.isAuthenticated()) {
@@ -63,16 +111,20 @@ export class AuthService {
 
   /**
    * Logs out the user.
-   * Clears all auth-related data from storage and redirects to the login page.
+   * Clears all authentication-related data from storage and redirects to the login page.
    */
   logout() {
-    sessionStorage.removeItem(this.KEYS.IS_LOGGED_IN);
+    // Clear session storage
     sessionStorage.removeItem(this.KEYS.TOKEN);
     sessionStorage.removeItem(this.KEYS.USER_DATA);
 
-    // Optional: Clear any other app-specific state if needed
+    // Clean up legacy items (if any exist from previous versions)
+    sessionStorage.removeItem("isAdminLoggedIn");
+
+    // Clear app-specific state from local storage
     localStorage.removeItem("activeAdminSection");
 
+    // Redirect to login page
     window.location.href = this.URLS.LOGIN;
   }
 }

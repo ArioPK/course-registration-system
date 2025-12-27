@@ -79,11 +79,32 @@ export class ApiService {
           enrolled: 35,
         },
       ],
+      
+      prerequisites: [
+        {
+          id: 1, 
+          target_course_id: 2, 
+          prerequisite_course_id: 1, 
+        },
+        {
+          id: 2,
+          target_course_id: 4, 
+          prerequisite_course_id: 3, 
+        },
+      ],
+
+      
+    unitConfig: {
+      min_units: 12,
+      max_units: 20,
+    },
+    
+      
     };
   }
 
   // ============================================================
-  // Private Methods
+  // Private Method
   // ============================================================
 
   _getAuthToken() {
@@ -186,6 +207,30 @@ export class ApiService {
       console.warn("⚠️ API: Login (MOCK mode)");
       await new Promise((r) => setTimeout(r, 1000));
 
+      if (username === "admin" && password === "admin123") {
+        return {
+          access_token: "mock_token_admin",
+          token_type: "bearer",
+          user: { username: "admin", role: "admin" },
+        };
+      }
+
+      if (username === "std1" && password === "1234") {
+        return {
+          access_token: "mock_token_student",
+          token_type: "bearer",
+          user: { username: "std1", role: "student", id: 101 },
+        };
+      }
+
+      if (username === "prof1" && password === "1234") {
+        return {
+          access_token: "mock_token_prof",
+          token_type: "bearer",
+          user: { username: "prof1", role: "professor", id: 201 },
+        };
+      }
+
       if (
         username === "admin" &&
         (password === "1234" || password === "admin123")
@@ -200,7 +245,7 @@ export class ApiService {
     }
 
     // --- REAL MODE ---
-    // درخواست واقعی به بک‌ند
+
     return await this._request("/auth/login", {
       method: "POST",
       body: JSON.stringify({ username, password }),
@@ -263,7 +308,6 @@ export class ApiService {
         body: JSON.stringify(courseData),
       });
 
-      // هندل کردن لفاف‌های پاسخ (Unwrapping)
       if (response && typeof response === "object") {
         if (response.course) return response.course;
         if (response.data) return response.data;
@@ -319,6 +363,144 @@ export class ApiService {
     } catch (error) {
       console.error(`Error deleting course ${id}:`, error);
       throw new Error(`خطا در حذف درس: ${error.message}`);
+    }
+  }
+
+  // ============================================================
+// Unit Configuration Methods (Mock + Real Support)
+// ============================================================
+
+/**
+ * Gets the current unit configuration settings.
+ * @returns {Promise<Object>} - The current min/max unit settings.
+ */
+async getUnitConfiguration() {
+  // --- MOCK MODE ---
+  if (this.USE_MOCK) {
+    console.warn("⚠️ API: Fetching unit configuration (MOCK mode)");
+    await new Promise((r) => setTimeout(r, 200));
+    return structuredClone(this._mockDB.unitConfig);
+  }
+
+  // --- REAL MODE (Assuming backend route is /api/settings/units) ---
+  try {
+    const response = await this._request("/api/settings/units", {
+      method: "GET",
+    });
+    // Provide a default if backend returns empty/null
+    return response || { min_units: 12, max_units: 20 }; 
+  } catch (error) {
+    throw new Error(`خطا در دریافت تنظیمات واحد: ${error.message}`);
+  }
+}
+
+/**
+ * Saves the new unit configuration settings.
+ * @param {Object} configData - { min_units, max_units }
+ * @returns {Promise<Object>} - The saved configuration object.
+ */
+async saveUnitConfiguration(configData) {
+  // --- MOCK MODE ---
+  if (this.USE_MOCK) {
+    console.warn("⚠️ API: Saving unit configuration (MOCK mode)", configData);
+    await new Promise((r) => setTimeout(r, 500));
+    this._mockDB.unitConfig = { ...configData };
+    return structuredClone(this._mockDB.unitConfig);
+  }
+
+  // --- REAL MODE (Assuming backend route is /api/settings/units) ---
+  try {
+    return await this._request("/api/settings/units", {
+      method: "PUT",
+      body: JSON.stringify(configData),
+    });
+  } catch (error) {
+    console.error("Error saving unit configuration:", error);
+    throw new Error(`خطا در ذخیره تنظیمات واحد: ${error.message}`);
+  }
+}
+
+  // ============================================================
+  // Prerequisite Methods (Mock + Real Support)
+  // ============================================================
+
+  async getPrerequisites() {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching prerequisites (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 300));
+      return structuredClone(this._mockDB.prerequisites);
+    }
+
+    // --- REAL MODE (Assuming backend route is /api/prerequisites) ---
+    try {
+      const response = await this._request("/api/prerequisites", {
+        method: "GET",
+      });
+      return response || [];
+    } catch (error) {
+      throw new Error(`خطا در دریافت پیش‌نیازها: ${error.message}`);
+    }
+  }
+
+  async addPrerequisite(data) {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Adding prerequisite (MOCK mode)", data);
+      await new Promise((r) => setTimeout(r, 500));
+
+      if (data.target_course_id == data.prerequisite_course_id) {
+        throw new Error("درس هدف و پیش‌نیاز نمی‌توانند یکسان باشند.");
+      }
+
+      // Mock uniqueness check
+      const isDuplicate = this._mockDB.prerequisites.some(
+        (p) =>
+          p.target_course_id == data.target_course_id &&
+          p.prerequisite_course_id == data.prerequisite_course_id
+      );
+
+      if (isDuplicate) {
+        throw new Error("این پیش‌نیاز قبلاً تعریف شده است.");
+      }
+
+      const newId =
+        Math.max(0, ...this._mockDB.prerequisites.map((p) => p.id)) + 1;
+      const newPrereq = { id: newId, ...data };
+      this._mockDB.prerequisites.push(newPrereq);
+      return newPrereq;
+    }
+
+    // --- REAL MODE ---
+    try {
+      return await this._request("/api/prerequisites", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    } catch (error) {
+      console.error("Error adding prerequisite:", error);
+      throw new Error(`خطا در افزودن پیش‌نیاز: ${error.message}`);
+    }
+  }
+
+  async deletePrerequisite(prerequisiteId) {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Deleting prerequisite (MOCK mode)", prerequisiteId);
+      this._mockDB.prerequisites = this._mockDB.prerequisites.filter(
+        (p) => p.id != prerequisiteId
+      );
+      return { success: true };
+    }
+
+    // --- REAL MODE (Assuming backend route is /api/prerequisites/{id}) ---
+    try {
+      return await this._request(`/api/prerequisites/${prerequisiteId}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error(`Error deleting prerequisite ${prerequisiteId}:`, error);
+      throw new Error(`خطا در حذف پیش‌نیاز: ${error.message}`);
     }
   }
 }
