@@ -36,6 +36,11 @@ def get_prereqs_for_course(db: Session, course_id: int) -> List[CoursePrerequisi
     )
 
 
+def get_all_prereqs(db: Session) -> List[CoursePrerequisite]:
+    """Return all prerequisite links across all courses."""
+    return db.query(CoursePrerequisite).all()
+
+
 def add_prereq(db: Session, course_id: int, prereq_course_id: int) -> CoursePrerequisite:
     """
     Create a course -> prerequisite relationship.
