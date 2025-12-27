@@ -33,10 +33,10 @@ def create_access_token(
     to_encode = data.copy()
 
     # Determine expiration time
-    if expires_delta is not None:
-        expire = datetime.now(timezone.utc) + expires_delta
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
+        expire = datetime.utcnow() + timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
         )
 
@@ -70,10 +70,17 @@ def decode_access_token(token: str) -> Dict[str, Any]:
             settings.JWT_SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
         )
-        #check that "sub" exists here:
+
+        # Check that 'sub' exists in the payload, it's important for identifying the user
         if "sub" not in payload:
             raise InvalidTokenError("Token payload missing 'sub' claim")
+
+        # Optionally check token expiration manually if needed
+        # (in case you want to handle expired tokens differently)
+        if datetime.utcnow() > datetime.utcfromtimestamp(payload["exp"]):
+            raise InvalidTokenError("Token has expired")
+
         return payload
+
     except JWTError as exc:
-        # This covers invalid signature, malformed token, expired token, etc.
         raise InvalidTokenError("Invalid or expired access token") from exc

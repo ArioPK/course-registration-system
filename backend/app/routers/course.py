@@ -27,7 +27,7 @@ from backend.app.services.prerequisite_service import (
     InvalidPrerequisiteRelationError,
 )
 from backend.app.models.admin import Admin
-from backend.app.dependencies.auth import get_current_admin
+from backend.app.dependencies.auth import get_current_admin, get_current_user_any_role
 
 
 router = APIRouter(
@@ -40,7 +40,7 @@ def list_courses(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_user_any_role),
 ):
     courses = list_courses_service(db, skip=skip, limit=limit)
     return courses
@@ -50,7 +50,7 @@ def list_courses(
 def get_course(
     course_id: int,
     db: Session = Depends(get_db),
-    current_admin: Admin = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_user_any_role),
 ):
     try:
         course = get_course_service(db, course_id)

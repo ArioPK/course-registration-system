@@ -14,7 +14,6 @@ from backend.app.models.student import Student
 from backend.app.models.professor import Professor
 from backend.app.services.jwt import decode_access_token, InvalidTokenError
 
-
 # Student OAuth2 scheme (tokenUrl should match the student login endpoint)
 # backend/tests/test_student_dependency.py
 
@@ -35,6 +34,31 @@ def _auth_headers(token: str) -> Dict[str, str]:
 
 def _unique_suffix() -> str:
     return uuid.uuid4().hex[:8]
+
+
+ALLOWED_ROLES = {"admin", "student", "professor"}
+
+def get_current_user_any_role(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    try:
+        # Decode the token
+        payload = decode_access_token(credentials.credentials)
+        
+        # Check if the role is in the allowed set
+        role = payload.get("role")
+        if role not in ALLOWED_ROLES:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Role not authorized for this action"
+            )
+
+        # Return payload (optional: you can return a minimal user context)
+        return payload
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
 
 
 def create_student_and_get_token(client: TestClient, db_session: Session) -> Dict[str, str]:
@@ -175,7 +199,7 @@ async def get_current_admin(
     """
     # Common exception for credential issues
     credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
+        status_code=status.HTTP_403_FORBIDDEN,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
