@@ -37,8 +37,24 @@ def get_prereqs_for_course(db: Session, course_id: int) -> List[CoursePrerequisi
 
 
 def get_all_prereqs(db: Session) -> List[CoursePrerequisite]:
-    """Return all prerequisite links across all courses."""
-    return db.query(CoursePrerequisite).all()
+    """Return all prerequisite links across all courses (stable ordering)."""
+    return (
+        db.query(CoursePrerequisite)
+        .order_by(CoursePrerequisite.course_id.asc(), CoursePrerequisite.prereq_course_id.asc())
+        .all()
+    )
+
+
+def get_all_prereqs(db: Session) -> List[CoursePrerequisite]:
+    """Return all prerequisite links across all courses (stable ordering)."""
+    return (
+        db.query(CoursePrerequisite)
+        .order_by(
+            CoursePrerequisite.course_id.asc(),
+            CoursePrerequisite.prereq_course_id.asc(),
+        )
+        .all()
+    )
 
 
 def add_prereq(db: Session, course_id: int, prereq_course_id: int) -> CoursePrerequisite:
