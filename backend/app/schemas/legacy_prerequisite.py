@@ -14,14 +14,17 @@ class LegacyPrerequisiteRead(BaseModel):
     Includes BOTH key styles to support:
     - frontend legacy keys: target_course_id, prerequisite_course_id
     - backend canonical keys: course_id, prereq_course_id
+
+    Also includes canonical legacy string id: "{course_id}-{prereq_course_id}"
+    for DELETE /api/prerequisites/{id}.
     """
     model_config = ConfigDict(from_attributes=True)
 
+    id: str  # canonical legacy id string (dash format)
     course_id: int
     prereq_course_id: int
     target_course_id: int
     prerequisite_course_id: int
-    id: Optional[int] = None  # only if association table ever has a surrogate id
 
 
 class LegacyPrerequisiteCreate(BaseModel):
@@ -32,10 +35,10 @@ class LegacyPrerequisiteCreate(BaseModel):
 
     Normalizes into course_id + prereq_course_id.
     """
-    course_id: Optional[int] = None
-    prereq_course_id: Optional[int] = None
-    target_course_id: Optional[int] = None
-    prerequisite_course_id: Optional[int] = None
+    course_id: int | None = None
+    prereq_course_id: int | None = None
+    target_course_id: int | None = None
+    prerequisite_course_id: int | None = None
 
     @model_validator(mode="after")
     def normalize_and_validate(self) -> "LegacyPrerequisiteCreate":
@@ -46,7 +49,7 @@ class LegacyPrerequisiteCreate(BaseModel):
 
         if self.course_id is None or self.prereq_course_id is None:
             raise ValueError(
-                "Missing required keys. Provide either "
+                "Invalid payload. Provide either "
                 "{course_id, prereq_course_id} or {target_course_id, prerequisite_course_id}."
             )
 
