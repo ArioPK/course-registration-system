@@ -34,6 +34,14 @@ def list_prerequisites_service(db: Session, course_id: int) -> List[CoursePrereq
     return prerequisite_repository.get_prereqs_for_course(db, course_id)
 
 
+def list_all_prerequisites_service(db: Session) -> List[CoursePrerequisite]:
+    """
+    Return all prerequisite relations (no extra business rules).
+    Used by legacy flat endpoint /api/prerequisites.
+    """
+    return prerequisite_repository.get_all_prereqs(db)
+
+
 def add_prerequisite_service(
     db: Session, course_id: int, prereq_course_id: int
 ) -> CoursePrerequisite:
