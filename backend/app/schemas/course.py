@@ -133,6 +133,10 @@ class CourseRead(CourseBase):
     Includes the database ID in addition to CourseBase fields.
     """
     id: int
+    
+    # UI shim: frontend expects `course.enrolled`, but enrollments don't exist yet.
+    # This defaults to 0 and does NOT require a DB field.
+    enrolled: int = 0
 
     # Pydantic v2 config
     model_config = ConfigDict(from_attributes=True)
