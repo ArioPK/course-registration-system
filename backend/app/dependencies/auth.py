@@ -40,6 +40,8 @@ def _unique_suffix() -> str:
 ALLOWED_ROLES = {"admin", "student", "professor"}
 any_role_bearer = HTTPBearer(auto_error=False)
 
+# IMPORTANT: auto_error=False so missing token becomes 401 (not FastAPI’s default 403)
+admin_bearer = HTTPBearer(auto_error=False)
 
 async def get_current_user_any_role(
     credentials: HTTPAuthorizationCredentials = Depends(any_role_bearer),
@@ -208,7 +210,7 @@ bearer_scheme = HTTPBearer(auto_error=True)
 
 
 async def get_current_admin(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    credentials: HTTPAuthorizationCredentials = Depends(admin_bearer),
     db: Session = Depends(get_db),
 ) -> Admin:
     """
@@ -217,20 +219,47 @@ async def get_current_admin(
     - Decodes & validates the token.
     - Loads the corresponding Admin from the database.
 
-    Raises HTTP 401 if:
-    - Token is missing, invalid, or expired.
-    - Token payload doesn't contain a 'sub' claim.
-    - Admin with the given username doesn't exist.
     """
-    # Common exception for credential issues
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    # A) Missing token -> 401
+    if credentials is None or not credentials.credentials:
+        _raise_unauthorized("Not authenticated")
 
     # The raw JWT string
     token: str = credentials.credentials
+
+    # A) Invalid/expired token -> 401
+    try:
+        payload = decode_access_token(token)
+    except InvalidTokenError:
+        _raise_unauthorized("Could not validate credentials")
+
+    sub = payload.get("sub")
+    role = payload.get("role")
+
+    # A) Missing claims -> 401
+    if not sub or not role:
+        _raise_unauthorized("Could not validate credentials")
+
+    # B) Valid token but role mismatch -> 403
+    if role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not enough permissions",
+        )
+
+    # C) Admin lookup -> 401 if not found
+    admin = db.query(Admin).filter(Admin.username == sub).first()
+    if admin is None:
+        _raise_unauthorized("Could not validate credentials")
+
+    # D) Inactive admin policy (keep consistent; 403 is typical)
+    if hasattr(admin, "is_active") and not admin.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Inactive admin account",
+        )
+
+    return admin
 
     # 1) Decode token
     try:

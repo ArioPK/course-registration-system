@@ -214,7 +214,7 @@ def test_student_token_cannot_post_course(client: TestClient, db_session: Sessio
     expected = _probe_admin_only_wrong_role_status(client, token)
 
     resp = client.post("/api/courses", json=_valid_course_payload(), headers=_auth_headers(token))
-    assert resp.status_code == expected, resp.text
+    assert resp.status_code == 403, resp.text
 
 
 def test_no_token_get_courses_behavior(client: TestClient, db_session: Session) -> None:
