@@ -5,7 +5,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
-from backend.app.dependencies.auth import get_current_admin
+from backend.app.dependencies.auth import get_current_admin ,get_current_user_any_role
 from backend.app.models.admin import Admin
 from backend.app.schemas.unit_limits import UnitLimitRead, UnitLimitUpdate
 from backend.app.services.unit_limit_service import (
@@ -34,7 +34,7 @@ def _safe_pydantic_errors(e: ValidationError):
 @router.get("/units", response_model=UnitLimitRead)
 def get_units(
     db: Session = Depends(get_db),
-    _current_admin: Admin = Depends(get_current_admin),
+    _current_user: dict = Depends(get_current_user_any_role),
 ) -> UnitLimitRead:
     policy = get_unit_limits_service(db)
     if hasattr(UnitLimitRead, "model_validate"):

@@ -8,9 +8,7 @@ from backend.app.models.student import Student
 from backend.app.schemas.course import CourseRead
 from backend.app.services.course_service import list_student_catalog_courses_service
 
-
-router = APIRouter(prefix="/api/student", tags=["student", "courses"])
-
+router = APIRouter(prefix="/student", tags=["student-courses"])
 
 @router.get("/courses", response_model=List[CourseRead])
 def list_student_courses(
