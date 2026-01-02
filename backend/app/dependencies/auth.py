@@ -235,8 +235,15 @@ async def get_current_admin(
     # 1) Decode token
     try:
         payload = decode_access_token(token)
+        role = payload.get("role")
+        if role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin privileges required",
+            )
     except InvalidTokenError:
         raise credentials_exception
+    
 
     # 2) Extract subject (username)
     username: Optional[str] = payload.get("sub")
