@@ -35,7 +35,7 @@ router = APIRouter(
     tags=["courses"],
 )
 
-@router.get("/", response_model=List[CourseRead])
+@router.get("", response_model=List[CourseRead])
 def list_courses(
     skip: int = 0,
     limit: int = 100,
@@ -62,7 +62,7 @@ def get_course(
         )
 
 
-@router.post("/", response_model=CourseRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CourseRead, status_code=status.HTTP_201_CREATED)
 def create_course(
     course_in: CourseCreate,
     db: Session = Depends(get_db),

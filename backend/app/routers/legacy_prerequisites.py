@@ -9,7 +9,7 @@ from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
-from backend.app.dependencies.auth import get_current_admin
+from backend.app.dependencies.auth import get_current_admin ,get_current_user_any_role
 from backend.app.models.admin import Admin
 from backend.app.schemas.legacy_prerequisite import (
     LegacyPrerequisiteCreate,
@@ -79,7 +79,7 @@ def _parse_legacy_id(raw_id: str) -> Tuple[int, int]:
 @router.get("", response_model=List[LegacyPrerequisiteRead])
 def list_all_prerequisites(
     db: Session = Depends(get_db),
-    _current_admin: Admin = Depends(get_current_admin),
+    _current_user: dict = Depends(get_current_user_any_role),
 ) -> List[LegacyPrerequisiteRead]:
     links = list_all_prerequisites_service(db)
     return [_to_legacy_read(link) for link in links]

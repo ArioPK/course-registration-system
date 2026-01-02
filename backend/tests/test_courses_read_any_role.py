@@ -1,96 +1,173 @@
+import uuid
+from typing import Dict
+
 import pytest
 from fastapi.testclient import TestClient
-from backend.app.main import app
-from backend.app.dependencies.auth import get_current_admin
+from sqlalchemy.orm import Session
+
+from backend.app.models.admin import Admin
+from backend.app.models.student import Student
+from backend.app.models.professor import Professor
+from backend.app.services.security import get_password_hash
 
 
-@pytest.fixture
-def client():
-    return TestClient(app)
+def _auth_headers(token: str) -> Dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
 
-@pytest.fixture
-def get_admin_token(client):
-    response = client.post('/auth/login', json={"username": "admin", "password": "admin123"})
-    assert response.status_code == 200
-    return response.json()["access_token"]
+def _unique() -> str:
+    return uuid.uuid4().hex[:8]
 
 
-@pytest.fixture
-def get_student_token(client):
-    response = client.post('/auth/student/login', json={"student_number": "std1", "password": "1234"})
-    assert response.status_code == 200
-    return response.json()["access_token"]
-
-
-@pytest.fixture
-def get_professor_token(client: TestClient, db_session):
-    # Function to get professor token
-    pass
-
-
-def test_settings_units_get_missing_token_returns_401(client):
-    response = client.get("/api/courses")
-    assert response.status_code == 401, response.text
-
-
-def test_settings_units_put_missing_token_returns_401(client):
-    response = client.put("/api/courses/1")
-    assert response.status_code == 401, response.text
-
-
-def test_settings_units_wrong_role_token_returns_403(client, get_student_token):
-    token = get_student_token
-    response = client.get(
-        "/api/courses", headers={"Authorization": f"Bearer {token}"}
+def create_admin(db_session: Session, password: str = "password123") -> Admin:
+    suffix = _unique()
+    admin = Admin(
+        username=f"admin_{suffix}",
+        password_hash=get_password_hash(password),
+        national_id=f"nid_{suffix}",
+        email=f"admin_{suffix}@example.com",
+        is_active=True,
     )
-    assert response.status_code == 403, response.text
+    db_session.add(admin)
+    db_session.commit()
+    return admin
 
 
-def test_settings_units_get_returns_expected_shape(client, get_admin_token):
-    token = get_admin_token
-    response = client.get("/api/courses", headers={"Authorization": f"Bearer {token}"})
-    assert response.status_code == 200, response.text
-    data = response.json()
-    assert "min_units" in data[0]
-    assert "max_units" in data[0]
-
-
-def test_settings_units_put_accepts_snake_case(client, get_admin_token):
-    token = get_admin_token
-    response = client.put(
-        "/api/courses/1",
-        json={"min_units": 10, "max_units": 20},
-        headers={"Authorization": f"Bearer {token}"},
+def create_student(db_session: Session, password: str = "password123") -> Student:
+    suffix = _unique()
+    student = Student(
+        student_number=f"stu_{suffix}",
+        full_name="Test Student",
+        email=f"student_{suffix}@example.com",
+        national_id=f"NID_{suffix}",
+        phone_number=f"0912{suffix[:7]}",
+        major="Computer Engineering",
+        entry_year=2023,
+        units_taken=0,
+        mark=None,
+        password_hash=get_password_hash(password),
+        is_active=True,
     )
-    assert response.status_code == 200, response.text
+    db_session.add(student)
+    db_session.commit()
+    return student
 
 
-def test_settings_units_put_accepts_camel_case(client, get_admin_token):
-    token = get_admin_token
-    response = client.put(
-        "/api/courses/1",
-        json={"minUnits": 10, "maxUnits": 20},
-        headers={"Authorization": f"Bearer {token}"},
+def create_professor(db_session: Session, password: str = "password123") -> Professor:
+    suffix = _unique()
+    professor = Professor(
+        professor_code=f"prof_{suffix}",
+        full_name="Test Professor",
+        email=f"prof_{suffix}@example.com",
+        password_hash=get_password_hash(password),
+        is_active=True,
     )
-    assert response.status_code == 200, response.text
+    db_session.add(professor)
+    db_session.commit()
+    return professor
 
 
-def test_settings_units_put_invalid_range_returns_400(client, get_admin_token):
-    token = get_admin_token
-    response = client.put(
-        "/api/courses/1",
-        json={"minUnits": 30, "maxUnits": 10},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response.status_code == 400, response.text
+def login_unified(client: TestClient, username: str, password: str) -> str:
+    resp = client.post("/auth/login", json={"username": username, "password": password})
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert "access_token" in body
+    return body["access_token"]
 
 
-def test_settings_units_put_missing_field_returns_400(client, get_admin_token):
-    token = get_admin_token
-    response = client.put(
-        "/api/courses/1",
-        json={"minUnits": 10},
-        headers={"Authorization": f"Bearer {token}"},
-    )
-    assert response.status_code == 400, response.text
+def create_course_via_admin_api(client: TestClient, admin_token: str) -> Dict:
+    suffix = _unique()
+    payload = {
+        "code": f"CS{suffix}",
+        "name": f"Course {suffix}",
+        "units": 3,
+        "department": "CS",
+        "semester": "Fall",
+        "capacity": 30,
+        "professor_name": "Dr. X",
+        "day_of_week": "SAT",
+        "start_time": "09:00",
+        "end_time": "11:00",
+        "location": "Room 1",
+        "is_active": True,
+    }
+    resp = client.post("/api/courses", json=payload, headers=_auth_headers(admin_token))
+    assert resp.status_code == 201, resp.text
+    return resp.json()
+
+
+def test_courses_get_missing_token_returns_401(client: TestClient):
+    resp = client.get("/api/courses")
+    assert resp.status_code == 401, resp.text
+
+
+def test_courses_get_invalid_token_returns_401(client: TestClient):
+    resp = client.get("/api/courses", headers={"Authorization": "Bearer badtoken"})
+    assert resp.status_code == 401, resp.text
+
+
+def test_student_token_can_get_courses_list_and_detail(
+    client: TestClient, db_session: Session
+):
+    admin = create_admin(db_session)
+    admin_token = login_unified(client, admin.username, "password123")
+    created = create_course_via_admin_api(client, admin_token)
+    course_id = created["id"]
+
+    student = create_student(db_session)
+    student_token = login_unified(client, student.student_number, "password123")
+
+    list_resp = client.get("/api/courses", headers=_auth_headers(student_token))
+    assert list_resp.status_code == 200, list_resp.text
+    courses = list_resp.json()
+    assert any(c["id"] == course_id for c in courses)
+
+    detail_resp = client.get(f"/api/courses/{course_id}", headers=_auth_headers(student_token))
+    assert detail_resp.status_code == 200, detail_resp.text
+    assert detail_resp.json()["id"] == course_id
+
+
+def test_professor_token_can_get_courses_list_and_detail(
+    client: TestClient, db_session: Session
+):
+    admin = create_admin(db_session)
+    admin_token = login_unified(client, admin.username, "password123")
+    created = create_course_via_admin_api(client, admin_token)
+    course_id = created["id"]
+
+    prof = create_professor(db_session)
+    prof_token = login_unified(client, prof.professor_code, "password123")
+
+    list_resp = client.get("/api/courses", headers=_auth_headers(prof_token))
+    assert list_resp.status_code == 200, list_resp.text
+    courses = list_resp.json()
+    assert any(c["id"] == course_id for c in courses)
+
+    detail_resp = client.get(f"/api/courses/{course_id}", headers=_auth_headers(prof_token))
+    assert detail_resp.status_code == 200, detail_resp.text
+    assert detail_resp.json()["id"] == course_id
+
+
+def test_student_cannot_create_course_still_admin_only(
+    client: TestClient, db_session: Session
+):
+    student = create_student(db_session)
+    token = login_unified(client, student.student_number, "password123")
+
+    payload = {
+        "code": f"CS{_unique()}",
+        "name": "Should Fail",
+        "units": 3,
+        "department": "CS",
+        "semester": "Fall",
+        "capacity": 10,
+        "professor_name": "Dr. Fail",
+        "day_of_week": "SAT",
+        "start_time": "09:00",
+        "end_time": "10:00",
+        "location": "Room X",
+        "is_active": True,
+    }
+
+    resp = client.post("/api/courses", json=payload, headers=_auth_headers(token))
+    assert resp.status_code in (401, 403), resp.text

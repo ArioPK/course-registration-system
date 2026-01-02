@@ -5,7 +5,7 @@ export class BaseApiService {
   constructor(baseUrl = "http://localhost:8000") {
     this.baseUrl = baseUrl;
     this.timeout = 10000; // 10 seconds timeout
-    this.USE_MOCK = true;
+    this.USE_MOCK = false;
   }
 
   _getAuthToken() {

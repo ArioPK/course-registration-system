@@ -28,6 +28,7 @@ from backend.app.models.student import Student
 from backend.app.services.security import get_password_hash
 
 
+
 def _auth_headers(token: str) -> Dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
@@ -37,28 +38,52 @@ def _unique_suffix() -> str:
 
 
 ALLOWED_ROLES = {"admin", "student", "professor"}
+any_role_bearer = HTTPBearer(auto_error=False)
 
-def get_current_user_any_role(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
-    try:
-        # Decode the token
-        payload = decode_access_token(credentials.credentials)
-        
-        # Check if the role is in the allowed set
-        role = payload.get("role")
-        if role not in ALLOWED_ROLES:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Role not authorized for this action"
-            )
 
-        # Return payload (optional: you can return a minimal user context)
-        return payload
-
-    except Exception:
+async def get_current_user_any_role(
+    credentials: HTTPAuthorizationCredentials = Depends(any_role_bearer),
+) -> Dict[str, Any]:
+    # Missing token -> 401
+    if credentials is None or not credentials.credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token"
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+
+    token = credentials.credentials
+
+    # Invalid/expired token -> 401
+    try:
+        payload = decode_access_token(token)
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    sub = payload.get("sub")
+    role = payload.get("role")
+
+    # Missing claims -> 401
+    if not sub or not role:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token missing required claims",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Unknown role -> 401 (since reads allow admin/student/professor)
+    if role not in ALLOWED_ROLES:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid role",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return payload
 
 
 def create_student_and_get_token(client: TestClient, db_session: Session) -> Dict[str, str]:
