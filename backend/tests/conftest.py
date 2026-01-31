@@ -10,6 +10,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from backend.app.database import Base, get_db
 from backend.app.main import app
+from backend.tests import factories
 
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///./test.db")
@@ -18,6 +19,11 @@ test_engine = create_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False} if TEST_DATABASE_URL.startswith("sqlite") else {},
 )
+
+@pytest.fixture()
+def current_term(monkeypatch):
+    monkeypatch.setenv("CURRENT_TERM", factories.CURRENT_TERM)
+    return factories.CURRENT_TERM
 
 
 @pytest.fixture(scope="session", autouse=True)
