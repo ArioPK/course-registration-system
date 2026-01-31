@@ -15,6 +15,7 @@ from backend.app.database import Base
 
 from backend.app.models.course_prerequisite import CoursePrerequisite
 
+from sqlalchemy.orm import relationship
 
 class Course(Base):
     __tablename__ = "courses"
@@ -41,6 +42,9 @@ class Course(Base):
 
     # Optional lifecycle fields
     is_active: bool = Column(Boolean, nullable=False, default=True)
+    
+    enrollments = relationship("Enrollment", back_populates="course", cascade="all, delete-orphan")
+    course_history = relationship("StudentCourseHistory", back_populates="course", cascade="all, delete-orphan")
 
     created_at: datetime = Column(
         DateTime(timezone=True),

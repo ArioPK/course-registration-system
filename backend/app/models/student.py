@@ -5,6 +5,7 @@ from sqlalchemy.sql import func
 
 from backend.app.database import Base
 
+from sqlalchemy.orm import relationship
 
 class Student(Base):
     __tablename__ = "students"
@@ -40,6 +41,10 @@ class Student(Base):
         onupdate=func.now(),
         nullable=False,
     )
+
+    #Enrollment and course history
+    enrollments = relationship("Enrollment", back_populates="student", cascade="all, delete-orphan")
+    course_history = relationship("StudentCourseHistory", back_populates="student", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
         return f"<Student id={self.id} student_number={self.student_number!r} full_name={self.full_name!r}>"

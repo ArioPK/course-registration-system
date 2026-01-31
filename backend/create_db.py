@@ -9,6 +9,8 @@ from backend.app.models.student import Student  # noqa: F401
 from backend.app.models.professor import Professor  # noqa: F401
 from backend.app.models import course_prerequisite  # noqa: F401
 from backend.app.models.unit_limit_policy import UnitLimitPolicy  # noqa: F401
+from backend.app.models.enrollment import Enrollment  # noqa
+from backend.app.models.student_course_history import StudentCourseHistory  # noqa
 
 
 def main() -> None:
