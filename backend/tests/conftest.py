@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from backend.app.database import Base, get_db
 from backend.app.main import app
 from backend.tests import factories
+from backend.tests.factories import CURRENT_TERM 
 
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///./test.db")
@@ -22,9 +23,11 @@ test_engine = create_engine(
 
 @pytest.fixture()
 def current_term(monkeypatch):
-    monkeypatch.setenv("CURRENT_TERM", factories.CURRENT_TERM)
-    return factories.CURRENT_TERM
-
+    """
+    Fixture to set the current term for tests.
+    """
+    monkeypatch.setenv("CURRENT_TERM", CURRENT_TERM)
+    return CURRENT_TERM
 
 @pytest.fixture(scope="session", autouse=True)
 def prepare_test_database() -> Generator[None, None, None]:

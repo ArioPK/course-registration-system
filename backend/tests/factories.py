@@ -12,10 +12,16 @@ from backend.app.models.course import Course
 from backend.app.models.professor import Professor
 from backend.app.models.student import Student
 from backend.app.repositories import enrollment_repository
+import uuid
 
 CURRENT_TERM = "1404-1"
 
-_seq = count(1)
+_seq = count(int(uuid.uuid4().int % 900000) + 100000)  # start 100000..999999
+
+
+def _unique_digits(n: int = 10) -> str:
+    # 10 digits string, unique enough for tests
+    return str(int(uuid.uuid4().int % (10**n))).zfill(n)
 
 
 def _next_i() -> int:
@@ -46,8 +52,8 @@ def make_student(
     password: str = "x",
     **overrides: Any,
 ) -> Student:
-    i = _next_i()
-    s_num = student_number or f"S{i:05d}"
+    _ = _next_i()
+    s_num = student_number or f"S{_unique_digits(10)}"
 
     data: dict[str, Any] = {}
 
@@ -66,7 +72,7 @@ def make_student(
 
     # Fill common NOT NULL fields if they exist
     if hasattr(Student, "national_id"):
-        data["national_id"] = f"{i:010d}"
+        data["national_id"] = overrides.pop("national_id", _unique_digits(10))
     if hasattr(Student, "phone_number"):
         data["phone_number"] = "09120000000"
     if hasattr(Student, "major"):
@@ -116,7 +122,7 @@ def make_professor(
         data["email"] = email or f"{p_num}@test.local"
 
     if hasattr(Professor, "national_id"):
-        data["national_id"] = f"{i:010d}"
+        data["national_id"] = overrides.pop("national_id", _unique_digits(10))
     if hasattr(Professor, "phone_number"):
         data["phone_number"] = "09120000000"
     if hasattr(Professor, "department"):
