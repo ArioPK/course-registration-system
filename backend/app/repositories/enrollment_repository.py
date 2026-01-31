@@ -74,3 +74,15 @@ def list_course_enrollments(db: Session, course_id: int, term: str) -> List[Enro
         .order_by(Enrollment.id.asc())
         .all()
     )
+
+
+def get_by_student_course_any_term(db: Session, student_id: int, course_id: int) -> Enrollment | None:
+    """
+    Returns an enrollment for (student_id, course_id) regardless of term.
+    Used to distinguish "not enrolled" vs "enrolled but not in current term".
+    """
+    return (
+        db.query(Enrollment)
+        .filter(Enrollment.student_id == student_id, Enrollment.course_id == course_id)
+        .first()
+    )

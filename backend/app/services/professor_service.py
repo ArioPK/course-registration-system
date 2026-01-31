@@ -11,11 +11,18 @@ from backend.app.models.student import Student
 from backend.app.models.enrollment import Enrollment
 from backend.app.schemas.professor import ProfessorCourseStudentsRead, ProfessorCourseStudentRead
 from backend.app.utils.current_term import get_current_term
+from backend.app.repositories import enrollment_repository
 
 
 class NotCourseOwnerError(Exception):
     pass
 
+class EnrollmentNotFoundError(Exception):
+    pass
+
+
+class NotCurrentTermError(Exception):
+    pass
 
 try:
     from backend.app.services.enrollment_service import CourseNotFoundError  # type: ignore
@@ -105,3 +112,43 @@ def list_professor_courses(
         owned.sort(key=lambda c: c.id)
 
     return owned
+
+
+
+def professor_remove_student(
+    db: Session,
+    *,
+    professor,
+    course_id: int,
+    student_id: int,
+    term: str | None = None,
+) -> None:
+    """
+    Remove a student's enrollment from a course ONLY if it is in the current term.
+    Rule #7:
+      - enrolled in different term => 409 (NotCurrentTermError)
+      - not enrolled at all => 404 (EnrollmentNotFoundError)
+    """
+    current = term or get_current_term()
+
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise CourseNotFoundError()
+
+    if _normalize_name(course.professor_name) != _normalize_name(getattr(professor, "full_name", "")):
+        raise NotCourseOwnerError()
+
+    # Try current term first
+    enrollment = enrollment_repository.get_by_student_course_term(db, student_id, course_id, current)
+    if not enrollment:
+        # If enrolled in ANY other term => 409
+        any_term = enrollment_repository.get_by_student_course_any_term(db, student_id, course_id)
+        if any_term:
+            raise NotCurrentTermError()
+        raise EnrollmentNotFoundError()
+
+    # Defensive Rule #7 check
+    if getattr(enrollment, "term", None) != current:
+        raise NotCurrentTermError()
+
+    enrollment_repository.delete(db, enrollment)
