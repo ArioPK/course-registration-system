@@ -20,14 +20,11 @@ test_engine = create_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False} if TEST_DATABASE_URL.startswith("sqlite") else {},
 )
-
 @pytest.fixture()
 def current_term(monkeypatch):
-    """
-    Fixture to set the current term for tests.
-    """
-    monkeypatch.setenv("CURRENT_TERM", CURRENT_TERM)
-    return CURRENT_TERM
+    monkeypatch.setenv("CURRENT_TERM", "1404-1")
+    return "1404-1"
+
 
 @pytest.fixture(scope="session", autouse=True)
 def prepare_test_database() -> Generator[None, None, None]:
