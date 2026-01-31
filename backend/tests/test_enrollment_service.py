@@ -203,16 +203,40 @@ def test_enroll_student_duplicate(db_session):
 
 def test_enroll_student_units_exceed_max(db_session):
     term = "1404-1"
-    _set_max_units(db_session, 4)
 
-    s = _make_student()
-    c_taken = _make_course(units=2, start=time(8, 0), end=time(9, 0))
-    c_new = _make_course(units=3, start=time(10, 0), end=time(11, 0))
+    # Get the existing policy; must keep max_units >= min_units
+    policy = unit_limit_service.get_unit_limits_service(db_session)
+    min_units = getattr(policy, "min_units", 0) or 0
 
-    db_session.add_all([s, c_taken, c_new])
+    # Smallest valid max that won't violate CHECK constraint
+    policy.max_units = max(1, min_units)
     db_session.commit()
 
-    enrollment_repository.create(db_session, student_id=s.id, course_id=c_taken.id, term=term)
+    max_units = policy.max_units
+
+    s = _make_student()
+    db_session.add(s)
+    db_session.commit()
+
+    # Fill the term to exactly max_units, then try adding 1 more unit
+    units_left = max_units
+    hour = 8
+    taken_courses = []
+
+    while units_left > 0:
+        u = 3 if units_left >= 3 else units_left  # keep units small (<=3)
+        c = _make_course(units=u, start=time(hour, 0), end=time(hour + 1, 0))
+        taken_courses.append(c)
+        units_left -= u
+        hour += 1
+
+    c_new = _make_course(units=1, start=time(hour, 0), end=time(hour + 1, 0))
+
+    db_session.add_all(taken_courses + [c_new])
+    db_session.commit()
+
+    for c in taken_courses:
+        enrollment_repository.create(db_session, student_id=s.id, course_id=c.id, term=term)
 
     with pytest.raises(UnitLimitViolationError):
         enroll_student(db_session, student_id=s.id, course_id=c_new.id, term=term)
