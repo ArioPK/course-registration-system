@@ -6,7 +6,4 @@ import os
 
 
 def get_current_term() -> str:
-    """
-    Returns the current term used for term-scoped operations (enroll/drop/schedule).
-    """
-    return os.getenv("CURRENT_TERM", "1")
+    return os.getenv("CURRENT_TERM", "1404-2")  # default to "1404-2" if not provided
