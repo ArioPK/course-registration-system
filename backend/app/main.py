@@ -11,6 +11,7 @@ from backend.app.routers.legacy_prerequisites import router as legacy_prerequisi
 from backend.app.routers.legacy_settings_units import router as legacy_settings_units_router
 from backend.app.routers import student_enrollments
 from backend.app.routers import student_schedule
+from backend.app.routers import professor_courses
 
 
 app = FastAPI(title=settings.APP_NAME)
@@ -36,3 +37,4 @@ app.include_router(legacy_prerequisites_router)
 app.include_router(legacy_settings_units_router)
 app.include_router(student_enrollments.router, prefix="/api")
 app.include_router(student_schedule.router, prefix="/api")
+app.include_router(professor_courses.router, prefix="/api")
