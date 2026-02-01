@@ -7,13 +7,80 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 
 from backend.app.models.course import Course
+from backend.app.models.student import Student
+from backend.app.models.enrollment import Enrollment
+from backend.app.schemas.professor import ProfessorCourseStudentsRead, ProfessorCourseStudentRead
 from backend.app.utils.current_term import get_current_term
 
 
+class NotCourseOwnerError(Exception):
+    pass
+
+
+try:
+    from backend.app.services.enrollment_service import CourseNotFoundError  # type: ignore
+except Exception:  # pragma: no cover
+    class CourseNotFoundError(Exception):
+        pass
+
+
 def _normalize_name(value: str | None) -> str:
-    # Collapse internal whitespace + trim + casefold/lower
     return " ".join((value or "").split()).strip().lower()
 
+
+def _name_sort_key(full_name: str, student_number: str):
+    tokens = (full_name or "").split()
+    if not tokens:
+        last = ""
+        first = ""
+    else:
+        last = tokens[-1].lower()
+        first = " ".join(tokens[:-1]).lower()
+    return (last, first, str(student_number))
+
+
+def list_course_students_for_professor(
+    db: Session,
+    *,
+    professor,
+    course_id: int,
+    term: Optional[str] = None,
+) -> ProfessorCourseStudentsRead:
+    current = term or get_current_term()
+
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise CourseNotFoundError()
+
+    # Ownership check 
+    if _normalize_name(course.professor_name) != _normalize_name(getattr(professor, "full_name", None)):
+        raise NotCourseOwnerError()
+
+    # Fetch students enrolled in this course in CURRENT term
+    # Using explicit join so we don't depend on relationship config.
+    rows = (
+        db.query(Student)
+        .join(Enrollment, Enrollment.student_id == Student.id)
+        .filter(Enrollment.course_id == course_id)
+        .filter(Enrollment.term == current)
+        .all()
+    )
+
+    students: List[ProfessorCourseStudentRead] = []
+    for s in rows:
+        email = getattr(s, "email", None)
+        students.append(
+            ProfessorCourseStudentRead(
+                student_id=s.id,
+                student_number=str(getattr(s, "student_number")),
+                full_name=getattr(s, "full_name"),
+                email=email,
+            )
+        )
+
+    students.sort(key=lambda x: _name_sort_key(x.full_name, x.student_number))
+
+    return ProfessorCourseStudentsRead(course_id=course_id, term=current, students=students)
 
 def list_professor_courses(
     db: Session,
@@ -21,12 +88,6 @@ def list_professor_courses(
     professor,
     term: Optional[str] = None,
 ) -> List[Course]:
-    """
-    P0 mapping strategy:
-    - Match Course.professor_name to Professor.full_name (normalized: collapsed whitespace, trimmed, lowercased)
-    - Filter to current term (Course.semester)
-    - Return stable ordering (code asc if present, then id asc)
-    """
     current_term = term or get_current_term()
 
     prof_full_name = getattr(professor, "full_name", None)
