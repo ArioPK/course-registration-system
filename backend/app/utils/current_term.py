@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 import os
+from backend.app.config.settings import settings
 
 
 def get_current_term() -> str:
-    return os.getenv("CURRENT_TERM", "1404-2")  # default to "1404-2" if not provided
+    """
+    Single source of truth for current term.
+    Reads env at call-time (important for tests monkeypatching CURRENT_TERM),
+    falling back to settings default.
+    """
+    return os.getenv("CURRENT_TERM", settings.CURRENT_TERM)

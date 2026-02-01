@@ -16,6 +16,8 @@ from backend.app.services.drop_service import (
     NotEnrolledError,
     UnitMinViolationError,
 )
+import uuid
+
 
 _counter = itertools.count(1)
 
@@ -23,14 +25,16 @@ _counter = itertools.count(1)
 def _new_id() -> int:
     return next(_counter)
 
+def _unique_digits(n: int = 10) -> str:
+    return str(int(uuid.uuid4().int % (10**n))).zfill(n)
 
 def _make_student() -> Student:
-    i = _new_id()
+    s_num = f"S{_unique_digits(10)}" 
     return Student(
-        student_number=f"S{i:05d}",
-        full_name=f"Student {i}",
-        national_id=f"{i:010d}",
-        email=f"s{i}@test.local",
+        student_number=s_num,
+        full_name=f"Student {s_num}",
+        national_id=_unique_digits(10),
+        email=f"{s_num}@test.local",  
         phone_number="09120000000",
         major="CS",
         entry_year=1400,
@@ -38,7 +42,6 @@ def _make_student() -> Student:
         password_hash="x",
         is_active=True,
     )
-
 
 def _make_course(*, term: str, units: int = 3, start_h: int = 9) -> Course:
     i = _new_id()
