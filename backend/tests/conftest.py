@@ -5,38 +5,23 @@ from typing import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker, Session
 
 from backend.app.database import Base, get_db
 from backend.app.main import app
 
 
-# 1. Test database URL & engine
-
-# Use a separate SQLite database file for tests.
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "sqlite:///./test.db")
 
-# For SQLite, we need check_same_thread=False so multiple sessions can be used.
 test_engine = create_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False} if TEST_DATABASE_URL.startswith("sqlite") else {},
 )
 
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-
-
-# 2. Create/drop tables for the test database
 
 @pytest.fixture(scope="session", autouse=True)
 def prepare_test_database() -> Generator[None, None, None]:
-    """
-    Create all tables in the test database at the start of the test session,
-    and drop them at the end.
-
-    This ensures tests use a clean schema that is completely separate
-    from the main application's database.
-    """
     Base.metadata.create_all(bind=test_engine)
     try:
         yield
@@ -44,48 +29,50 @@ def prepare_test_database() -> Generator[None, None, None]:
         Base.metadata.drop_all(bind=test_engine)
 
 
-# 3. Per-test DB session fixture
-
 @pytest.fixture()
 def db_session() -> Generator[Session, None, None]:
     """
-    Provides a fresh SQLAlchemy session for each test.
-
-    This session is bound to the test engine and is independent of the
-    application's main SessionLocal. Tests can use this fixture directly
-    to insert/query data in the test DB.
+    Per-test DB session that is isolated via an outer transaction + SAVEPOINT.
+    This prevents committed data from leaking between tests.
     """
+    connection = test_engine.connect()
+    transaction = connection.begin()
+
+    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=connection)
     db = TestingSessionLocal()
+
+    # Start a nested transaction (SAVEPOINT) so test code can commit safely.
+    db.begin_nested()
+
+    @event.listens_for(db, "after_transaction_end")
+    def _restart_savepoint(session, trans):
+        # Re-open SAVEPOINT after each commit/rollback inside the test
+        if trans.nested and not trans._parent.nested:
+            session.begin_nested()
+
     try:
         yield db
     finally:
-        db.rollback()
         db.close()
 
+        # Some tests may rollback/close the outer transaction already (e.g., after IntegrityError).
+        if transaction.is_active:
+            transaction.rollback()
 
-# 4. FastAPI TestClient fixture with get_db override
+        connection.close()
 
 @pytest.fixture()
-def client() -> Generator[TestClient, None, None]:
+def client(db_session: Session) -> Generator[TestClient, None, None]:
     """
-    Provides a FastAPI TestClient that uses the test database.
-
-    It overrides the application's get_db dependency to inject sessions
-    from the test engine instead of the real database.
+    TestClient that uses the SAME db_session as the test (same transaction),
+    so API calls see the test data and nothing leaks across tests.
     """
-
     def override_get_db() -> Generator[Session, None, None]:
-        db = TestingSessionLocal()
-        try:
-            yield db
-        finally:
-            db.rollback()
-            db.close()
+        yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
 
     with TestClient(app) as c:
         yield c
 
-    # Clean up overrides after the test
     app.dependency_overrides.clear()

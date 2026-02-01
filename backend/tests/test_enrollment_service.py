@@ -77,8 +77,12 @@ def _make_course(
 def _set_max_units(db_session, max_units: int) -> None:
     policy = unit_limit_service.get_unit_limits_service(db_session)
     policy.max_units = max_units
-    db_session.commit()
 
+    # Keep DB constraint valid: max_units must be >= min_units
+    if policy.min_units > max_units:
+        policy.min_units = max_units
+
+    db_session.commit()
 
 def _add_prereq_link(db_session, *, course_id: int, prereq_course_id: int) -> None:
     """
