@@ -15,14 +15,9 @@ class EnrollmentCreate(BaseModel):
     term: Optional[str] = None
 
 
-class EnrollmentRead(BaseModel):
+class StudentEnrollmentItemRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
-    student_id: int
-    course_id: int
     term: str
-    created_at: Optional[datetime] = None
-
-    # Optional but preferred for UI
-    course: Optional[CourseRead] = None
+    created_at: datetime
+    course: CourseRead
