@@ -161,31 +161,27 @@ export class StudentCourseController {
       const query = searchQuery.toLowerCase().trim();
       filteredCourses = allCourses.filter((course) => {
         if (filterType === "course_mix") {
-          const nameMatch =
-            course.name && course.name.toLowerCase().includes(query);
-          const codeMatch =
-            course.code && course.code.toLowerCase().includes(query);
+          const nameMatch = course.name && course.name.toLowerCase().includes(query);
+          const codeMatch = course.code && course.code.toLowerCase().includes(query);
           return nameMatch || codeMatch;
         } else {
-          const valueToCheck = course[filterType]
-            ? String(course[filterType]).toLowerCase()
-            : "";
+          const valueToCheck = course[filterType] ? String(course[filterType]).toLowerCase() : "";
           return valueToCheck.includes(query);
         }
       });
     }
 
-    const enrolledIds = new Set(myEnrollments.map((e) => e.course.id));
+    const enrolledIds = new Set((myEnrollments || []).map((e) => e.course?.id).filter(Boolean));
+    const prereqList = Array.isArray(prerequisites) ? prerequisites : [];
 
     // Pass parameters in correct order: courses, prerequisites, onEnrollClick, enrolledIdsSet
     this.view.renderCourses(
       filteredCourses,
-      prerequisites || [], // ✅ prerequisites array
-      (courseId) => this.handleEnroll(courseId), // ✅ enroll callback
-      enrolledIds // ✅ enrolled id set
+      prerequisites || [], 
+      (courseId) => this.handleEnroll(courseId), 
+      enrolledIds 
     );
   }
-
   showMyEnrollments() {
     const { myEnrollments, unitConfig } = this.state;
 
