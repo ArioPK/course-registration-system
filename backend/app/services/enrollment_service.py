@@ -16,7 +16,6 @@ from backend.app.repositories import (
     course_repository,
 )
 
-# Import the module (since it likely exposes functions, not a "unit_limit_service" object)
 from backend.app.services import unit_limit_service
 
 

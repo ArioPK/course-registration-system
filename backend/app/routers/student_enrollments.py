@@ -18,6 +18,8 @@ from backend.app.models.course import Course
 from backend.app.models.enrollment import Enrollment
 from backend.app.models.student import Student
 from backend.app.services import unit_limit_service
+from backend.app.services import enrollment_service
+
 
 router = APIRouter(prefix="/student", tags=["student"])
 
@@ -59,34 +61,31 @@ def enroll_student(
     db: Session = Depends(get_db),
     current_student: Student = Depends(get_current_student),
 ):
-    # accept both course_id and courseId
     course_id = payload.get("course_id") or payload.get("courseId")
     if course_id is None:
         raise HTTPException(status_code=422, detail="course_id is required")
 
     term = payload.get("term") or _current_term()
 
-    course = db.get(Course, int(course_id))
-    if not course:
-        raise HTTPException(status_code=404, detail="The requested course was not found.")
-
-    # prevent duplicates
-    exists = (
-        db.query(Enrollment)
-        .filter(
-            Enrollment.student_id == current_student.id,
-            Enrollment.course_id == int(course_id),
-            Enrollment.term == term,
+    try:
+        e = enrollment_service.enroll_student(
+            db,
+            student_id=current_student.id,
+            course_id=int(course_id),
+            term=term,
         )
-        .first()
-    )
-    if exists:
+    except enrollment_service.CourseNotFoundError:
+        raise HTTPException(status_code=404, detail="The requested course was not found.")
+    except enrollment_service.DuplicateEnrollmentError:
         raise HTTPException(status_code=409, detail="Student is already enrolled in this course.")
-
-    e = Enrollment(student_id=current_student.id, course_id=int(course_id), term=term)
-    db.add(e)
-    db.commit()
-    db.refresh(e)
+    except enrollment_service.CapacityFullError:
+        raise HTTPException(status_code=409, detail="Course is full.")
+    except enrollment_service.PrereqNotMetError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except enrollment_service.TimeConflictError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
+    except enrollment_service.UnitLimitViolationError as exc:
+        raise HTTPException(status_code=409, detail=str(exc))
 
     return EnrollmentRead(
         course_id=e.course_id,
@@ -94,6 +93,7 @@ def enroll_student(
         term=e.term,
         created_at=getattr(e, "created_at", None),
     )
+
 
 
 @router.get("/enrollments", response_model=list[StudentEnrollmentItemRead])
