@@ -7,37 +7,38 @@ import { ProfessorCourseView } from "./ui/views/professor-course.view.js";
 import { ProfessorCourseController } from "./controllers/professor-course.controller.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Initialize Services
-    const authService = new AuthService();
-    
-    const apiService = new ApiService("http://localhost:8000"); 
+  // 1. Initialize Services
+  const authService = new AuthService();
 
-    // 2. Auth Check
-    if (!authService.isAuthenticated()) {
-        authService.enforceAuth(); 
-        return;
-    }
+  const apiService = new ApiService("http://localhost:8000");
 
-    const role = authService.getRole();
-    if (role !== "professor") {
-       
-        window.location.href = "../Login/index.html"; 
-        return;
-    }
+  // 2. Auth Check
+  if (!authService.isAuthenticated()) {
+    authService.enforceAuth();
+    return;
+  }
 
-    
-    const logoutBtn = document.getElementById("logout-btn");
-    if(logoutBtn) {
-        logoutBtn.addEventListener("click", () => {
-            authService.logout();
-        });
-    }
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      authService.logout();
+    });
+  }
+  const role = authService.getRole();
+  if (role !== "professor") {
+    window.location.href = "../Login/index.html";
+    return;
+  }
 
-    // 3. Initialize View & Controller
-    const view = new ProfessorCourseView();
-    const controller = new ProfessorCourseController(apiService, authService, view);
+  // 3. Initialize View & Controller
+  const view = new ProfessorCourseView();
+  const controller = new ProfessorCourseController(
+    apiService,
+    authService,
+    view
+  );
 
-    // 4. Start
-    console.log("Professor Panel Initialized.");
-    controller.init();
+  // 4. Start
+  console.log("Professor Panel Initialized.");
+  controller.init();
 });
