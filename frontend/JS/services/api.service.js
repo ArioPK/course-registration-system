@@ -13,7 +13,7 @@ export class ApiService {
     this.timeout = 10000; // 10 seconds timeout
 
     // Mock Mode
-    this.USE_MOCK = true;
+    this.USE_MOCK = false;
 
     // Mock Database
     this._mockDB = {
@@ -291,6 +291,15 @@ export class ApiService {
   /**
    */
   async getMyEnrollments() {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching enrollments (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 300));
+      // Return empty array for mock mode (no enrollments by default)
+      return [];
+    }
+
+    // --- REAL MODE ---
     try {
       return await this._request("/api/student/enrollments", { method: "GET" });
     } catch (error) {
@@ -312,6 +321,15 @@ export class ApiService {
     }
   }
   async getStudentSchedule() {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching student schedule (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 300));
+      // Return empty schedule for mock mode
+      return { days: [] };
+    }
+
+    // --- REAL MODE ---
     try {
       return await this._request("/api/student/schedule", { method: "GET" });
     } catch (error) {
@@ -323,6 +341,16 @@ export class ApiService {
   // --- Professor Methods ---
 
   async getProfessorCourses() {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching professor courses (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 300));
+      // Return all courses for professor in mock mode
+      // In real mode, backend would filter by professor
+      return structuredClone(this._mockDB.courses);
+    }
+
+    // --- REAL MODE ---
     try {
       return await this._request("/api/professor/courses", { method: "GET" });
     } catch (error) {
@@ -332,6 +360,15 @@ export class ApiService {
   }
 
   async getCourseStudents(courseId) {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching course students (MOCK mode)", courseId);
+      await new Promise((r) => setTimeout(r, 300));
+      // Return empty array for mock mode (no students enrolled by default)
+      return [];
+    }
+
+    // --- REAL MODE ---
     try {
       const response = await this._request(
         `/api/professor/courses/${courseId}/students`,
@@ -340,7 +377,15 @@ export class ApiService {
         }
       );
 
-      return response.students || response;
+      // Backend returns ProfessorCourseStudentsRead with students array
+      if (response && response.students && Array.isArray(response.students)) {
+        return response.students;
+      }
+      // Fallback if response is already an array
+      if (Array.isArray(response)) {
+        return response;
+      }
+      return [];
     } catch (error) {
       console.error(`Error fetching students for course ${courseId}:`, error);
       throw error;
@@ -373,8 +418,9 @@ export class ApiService {
     }
 
     // --- REAL MODE ---
+    // Note: This method is used by student panel, so we use student courses endpoint
     try {
-      const response = await this._request("/api/courses", { method: "GET" });
+      const response = await this._request("/api/student/courses", { method: "GET" });
 
       if (response && typeof response === "object") {
         if (Array.isArray(response)) return response;
