@@ -13,7 +13,7 @@ export class ApiService {
     this.timeout = 10000; // 10 seconds timeout
 
     // Mock Mode
-    this.USE_MOCK = true;
+    this.USE_MOCK = false;
 
     // Mock Database
     this._mockDB = {

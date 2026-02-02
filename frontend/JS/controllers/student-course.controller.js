@@ -83,7 +83,7 @@ export class StudentCourseController {
         this.api.getUnitConfiguration(),
       ]);
 
-      const currentSemester = "1403-1";
+      const currentSemester = "1404-1";
       this.state.allCourses = courses.filter(
         (c) => c.semester === currentSemester
       );
@@ -111,36 +111,33 @@ export class StudentCourseController {
   }
 
   _filterAndRender() {
-    const { allCourses, searchQuery, filterType, myEnrollments } = this.state;
+    const { allCourses, prerequisites, searchQuery, filterType, myEnrollments } = this.state;
     let filteredCourses = allCourses;
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase().trim();
       filteredCourses = allCourses.filter((course) => {
         if (filterType === "course_mix") {
-          const nameMatch =
-            course.name && course.name.toLowerCase().includes(query);
-          const codeMatch =
-            course.code && course.code.toLowerCase().includes(query);
+          const nameMatch = course.name && course.name.toLowerCase().includes(query);
+          const codeMatch = course.code && course.code.toLowerCase().includes(query);
           return nameMatch || codeMatch;
         } else {
-          const valueToCheck = course[filterType]
-            ? String(course[filterType]).toLowerCase()
-            : "";
+          const valueToCheck = course[filterType] ? String(course[filterType]).toLowerCase() : "";
           return valueToCheck.includes(query);
         }
       });
     }
 
-    const enrolledIds = new Set(myEnrollments.map((e) => e.course.id));
+    const enrolledIds = new Set((myEnrollments || []).map((e) => e.course?.id).filter(Boolean));
+    const prereqList = Array.isArray(prerequisites) ? prerequisites : [];
 
     this.view.renderCourses(
       filteredCourses,
-      (courseId) => this.handleEnroll(courseId),
-      enrolledIds
+      prereqList, // ✅ correct 2nd arg
+      (courseId) => this.handleEnroll(courseId), // ✅ correct 3rd arg
+      enrolledIds // ✅ correct 4th arg
     );
   }
-
   showMyEnrollments() {
     const { myEnrollments, unitConfig } = this.state;
 
