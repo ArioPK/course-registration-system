@@ -79,27 +79,24 @@ export class ApiService {
           enrolled: 35,
         },
       ],
-      
+
       prerequisites: [
         {
-          id: 1, 
-          target_course_id: 2, 
-          prerequisite_course_id: 1, 
+          id: 1,
+          target_course_id: 2,
+          prerequisite_course_id: 1,
         },
         {
           id: 2,
-          target_course_id: 4, 
-          prerequisite_course_id: 3, 
+          target_course_id: 4,
+          prerequisite_course_id: 3,
         },
       ],
 
-      
-    unitConfig: {
-      min_units: 12,
-      max_units: 20,
-    },
-    
-      
+      unitConfig: {
+        min_units: 12,
+        max_units: 20,
+      },
     };
   }
 
@@ -258,13 +255,18 @@ export class ApiService {
    * Gets all courses from the API.
    * @returns {Promise<Array<Object>>} - An array of course objects.
    */
-
+  async getStudentSchedule() {
+    try {
+      return await this._request("/api/student/schedule", { method: "GET" });
+    } catch (error) {
+      console.error("Error fetching student schedule:", error);
+      throw error;
+    }
+  }
 
   // --- Professor Methods ---
 
-
   async getProfessorCourses() {
-   
     try {
       return await this._request("/api/professor/courses", { method: "GET" });
     } catch (error) {
@@ -273,20 +275,21 @@ export class ApiService {
     }
   }
 
-
   async getCourseStudents(courseId) {
     try {
-      const response = await this._request(`/api/professor/courses/${courseId}/students`, {
-        method: "GET",
-      });
-    
+      const response = await this._request(
+        `/api/professor/courses/${courseId}/students`,
+        {
+          method: "GET",
+        }
+      );
+
       return response.students || response;
     } catch (error) {
       console.error(`Error fetching students for course ${courseId}:`, error);
       throw error;
     }
   }
-
 
   async removeStudentFromCourse(courseId, studentId) {
     try {
@@ -297,7 +300,10 @@ export class ApiService {
         }
       );
     } catch (error) {
-      console.error(`Error removing student ${studentId} from course ${courseId}:`, error);
+      console.error(
+        `Error removing student ${studentId} from course ${courseId}:`,
+        error
+      );
       throw error;
     }
   }
@@ -410,58 +416,58 @@ export class ApiService {
   }
 
   // ============================================================
-// Unit Configuration Methods (Mock + Real Support)
-// ============================================================
+  // Unit Configuration Methods (Mock + Real Support)
+  // ============================================================
 
-/**
- * Gets the current unit configuration settings.
- * @returns {Promise<Object>} - The current min/max unit settings.
- */
-async getUnitConfiguration() {
-  // --- MOCK MODE ---
-  if (this.USE_MOCK) {
-    console.warn("⚠️ API: Fetching unit configuration (MOCK mode)");
-    await new Promise((r) => setTimeout(r, 200));
-    return structuredClone(this._mockDB.unitConfig);
+  /**
+   * Gets the current unit configuration settings.
+   * @returns {Promise<Object>} - The current min/max unit settings.
+   */
+  async getUnitConfiguration() {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching unit configuration (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 200));
+      return structuredClone(this._mockDB.unitConfig);
+    }
+
+    // --- REAL MODE (Assuming backend route is /api/settings/units) ---
+    try {
+      const response = await this._request("/api/settings/units", {
+        method: "GET",
+      });
+      // Provide a default if backend returns empty/null
+      return response || { min_units: 12, max_units: 20 };
+    } catch (error) {
+      throw new Error(`خطا در دریافت تنظیمات واحد: ${error.message}`);
+    }
   }
 
-  // --- REAL MODE (Assuming backend route is /api/settings/units) ---
-  try {
-    const response = await this._request("/api/settings/units", {
-      method: "GET",
-    });
-    // Provide a default if backend returns empty/null
-    return response || { min_units: 12, max_units: 20 }; 
-  } catch (error) {
-    throw new Error(`خطا در دریافت تنظیمات واحد: ${error.message}`);
-  }
-}
+  /**
+   * Saves the new unit configuration settings.
+   * @param {Object} configData - { min_units, max_units }
+   * @returns {Promise<Object>} - The saved configuration object.
+   */
+  async saveUnitConfiguration(configData) {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Saving unit configuration (MOCK mode)", configData);
+      await new Promise((r) => setTimeout(r, 500));
+      this._mockDB.unitConfig = { ...configData };
+      return structuredClone(this._mockDB.unitConfig);
+    }
 
-/**
- * Saves the new unit configuration settings.
- * @param {Object} configData - { min_units, max_units }
- * @returns {Promise<Object>} - The saved configuration object.
- */
-async saveUnitConfiguration(configData) {
-  // --- MOCK MODE ---
-  if (this.USE_MOCK) {
-    console.warn("⚠️ API: Saving unit configuration (MOCK mode)", configData);
-    await new Promise((r) => setTimeout(r, 500));
-    this._mockDB.unitConfig = { ...configData };
-    return structuredClone(this._mockDB.unitConfig);
+    // --- REAL MODE (Assuming backend route is /api/settings/units) ---
+    try {
+      return await this._request("/api/settings/units", {
+        method: "PUT",
+        body: JSON.stringify(configData),
+      });
+    } catch (error) {
+      console.error("Error saving unit configuration:", error);
+      throw new Error(`خطا در ذخیره تنظیمات واحد: ${error.message}`);
+    }
   }
-
-  // --- REAL MODE (Assuming backend route is /api/settings/units) ---
-  try {
-    return await this._request("/api/settings/units", {
-      method: "PUT",
-      body: JSON.stringify(configData),
-    });
-  } catch (error) {
-    console.error("Error saving unit configuration:", error);
-    throw new Error(`خطا در ذخیره تنظیمات واحد: ${error.message}`);
-  }
-}
 
   // ============================================================
   // Prerequisite Methods (Mock + Real Support)
@@ -513,7 +519,6 @@ async saveUnitConfiguration(configData) {
       this._mockDB.prerequisites.push(newPrereq);
       return newPrereq;
     }
-    
 
     // --- REAL MODE ---
     try {
@@ -548,5 +553,3 @@ async saveUnitConfiguration(configData) {
     }
   }
 }
-
-
