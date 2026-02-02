@@ -172,6 +172,7 @@ python backend/seed_initial_student.py
 python backend/seed_initial_professor.py
 ```
 
+use their password and username for logging 
 They read credentials from environment variables. Check `.env.example` for names like:
 
 * `INITIAL_ADMIN_*`
