@@ -86,9 +86,17 @@ export class StudentCourseController {
         // Use student-specific endpoint
         courses = await this.api.getStudentCourses();
         console.log("Courses loaded:", courses);
+        console.log("Courses type:", Array.isArray(courses) ? "array" : typeof courses);
+        console.log("Courses length:", Array.isArray(courses) ? courses.length : "not an array");
       } catch (error) {
         console.error("Error loading courses:", error);
+        console.error("Error details:", {
+          message: error?.message,
+          stack: error?.stack,
+          name: error?.name
+        });
         // Continue with empty array
+        courses = [];
       }
 
       try {
@@ -120,12 +128,31 @@ export class StudentCourseController {
       const prerequisitesArray = Array.isArray(prerequisites) ? prerequisites : [];
       const enrollmentsArray = Array.isArray(enrollments) ? enrollments : [];
 
+      console.log("Data summary:", {
+        coursesCount: coursesArray.length,
+        prerequisitesCount: prerequisitesArray.length,
+        enrollmentsCount: enrollmentsArray.length,
+        hasConfig: !!config
+      });
+
       // Use current term - backend uses 1404-1 by default
       // This should match backend's CURRENT_TERM setting
       const currentSemester = "1404-1";
-      this.state.allCourses = coursesArray.filter(
-        (c) => c && c.semester === currentSemester
+      console.log("Filtering courses by semester:", currentSemester);
+      
+      const filteredBySemester = coursesArray.filter(
+        (c) => {
+          if (!c) return false;
+          const matches = c.semester === currentSemester;
+          if (!matches && c.semester) {
+            console.log(`Course ${c.code} (${c.name}) has semester ${c.semester}, not ${currentSemester}`);
+          }
+          return matches;
+        }
       );
+      
+      console.log(`Filtered courses: ${filteredBySemester.length} out of ${coursesArray.length}`);
+      this.state.allCourses = filteredBySemester;
 
       this.state.prerequisites = prerequisitesArray;
       this.state.myEnrollments = enrollmentsArray;
@@ -134,10 +161,22 @@ export class StudentCourseController {
         this.state.unitConfig = config;
       }
 
-      // Only show error if courses failed to load
+      // Show appropriate messages based on what we received
       if (coursesArray.length === 0 && !this.api.USE_MOCK) {
+        console.warn("No courses received from API");
         this.view.showError("خطا در دریافت لیست دروس. لطفاً اتصال خود را بررسی کنید.");
+      } else if (filteredBySemester.length === 0 && coursesArray.length > 0) {
+        const availableSemesters = [...new Set(coursesArray.map(c => c.semester).filter(Boolean))];
+        console.warn(`No courses found for semester ${currentSemester}. Available semesters:`, availableSemesters);
+        if (availableSemesters.length > 0) {
+          this.view.showError(`هیچ درسی برای ترم ${currentSemester} یافت نشد. ترم‌های موجود: ${availableSemesters.join(", ")}`);
+        } else {
+          this.view.showError(`هیچ درسی برای ترم ${currentSemester} یافت نشد.`);
+        }
+        // Still render empty state
+        this._filterAndRender();
       } else {
+        console.log(`Rendering ${filteredBySemester.length} courses...`);
         this._filterAndRender();
       }
     } catch (error) {
@@ -175,7 +214,13 @@ export class StudentCourseController {
       });
     }
 
-    const enrolledIds = new Set(myEnrollments.map((e) => e.course.id));
+    // Extract enrolled course IDs safely
+    const enrolledIds = new Set(
+      myEnrollments
+        .filter((e) => e && e.course && e.course.id)
+        .map((e) => e.course.id)
+    );
+    console.log("Enrolled course IDs:", Array.from(enrolledIds));
 
     // Pass parameters in correct order: courses, prerequisites, onEnrollClick, enrolledIdsSet
     this.view.renderCourses(

@@ -123,6 +123,7 @@ export class ApiService {
 
     try {
       const url = `${this.baseUrl}${endpoint}`;
+      console.log(`[API Request] ${options.method || "GET"} ${url}`);
 
       const response = await fetch(url, {
         ...options,
@@ -135,11 +136,14 @@ export class ApiService {
 
       clearTimeout(timeoutId);
 
+      console.log(`[API Response] ${response.status} ${response.statusText} for ${url}`);
+
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
 
         try {
           const errorData = await response.json();
+          console.error(`[API Error] ${url}:`, errorData);
 
           if (errorData.detail) {
             errorMessage = Array.isArray(errorData.detail)
@@ -155,8 +159,13 @@ export class ApiService {
         } catch (e) {
           try {
             const text = await response.text();
-            if (text) errorMessage = text;
-          } catch (e2) {}
+            if (text) {
+              errorMessage = text;
+              console.error(`[API Error Text] ${url}:`, text);
+            }
+          } catch (e2) {
+            console.error(`[API Error] Failed to read error response:`, e2);
+          }
         }
 
         throw new Error(errorMessage);
@@ -166,25 +175,34 @@ export class ApiService {
         response.status === 204 ||
         response.headers.get("content-length") === "0"
       ) {
+        console.log(`[API Success] ${url} - No content (204)`);
         return { success: true };
       }
 
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
-        return await response.json();
+        const data = await response.json();
+        console.log(`[API Success] ${url} - JSON response:`, data);
+        return data;
       } else {
         const text = await response.text();
-        return text ? JSON.parse(text) : { success: true };
+        const parsed = text ? JSON.parse(text) : { success: true };
+        console.log(`[API Success] ${url} - Text response parsed:`, parsed);
+        return parsed;
       }
     } catch (error) {
       clearTimeout(timeoutId);
+      console.error(`[API Request Failed] ${endpoint}:`, error);
+      
       if (error.name === "AbortError") {
         throw new Error("Request timeout. Please try again.");
       }
 
-      throw error.message
-        ? error
-        : new Error(`Network error: ${error.message || "Unknown error"}`);
+      if (error.message) {
+        throw error;
+      }
+      
+      throw new Error(`Network error: ${error.message || "Unknown error"}`);
     }
   }
   // ============================================================
