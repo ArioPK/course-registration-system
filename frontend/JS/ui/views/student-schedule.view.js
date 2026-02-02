@@ -85,14 +85,18 @@ export class StudentScheduleView {
   }
 
   toggleView(showSchedule) {
+    const enrollmentsSection = document.getElementById("enrollments-section");
+    
     if (showSchedule) {
       this.scheduleSection.classList.remove("hidden");
       this.coursesGrid.classList.add("hidden");
       if (this.searchToolbar) this.searchToolbar.classList.add("hidden"); // مخفی کردن سرچ در حالت برنامه
+      if (enrollmentsSection) enrollmentsSection.classList.add("hidden"); // مخفی کردن بخش دروس من
     } else {
       this.scheduleSection.classList.add("hidden");
       this.coursesGrid.classList.remove("hidden");
       if (this.searchToolbar) this.searchToolbar.classList.remove("hidden");
+      if (enrollmentsSection) enrollmentsSection.classList.add("hidden"); // اطمینان از مخفی بودن بخش دروس من
     }
   }
 }

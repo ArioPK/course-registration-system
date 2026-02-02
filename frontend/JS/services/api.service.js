@@ -13,7 +13,7 @@ export class ApiService {
     this.timeout = 10000; // 10 seconds timeout
 
     // Mock Mode
-    this.USE_MOCK = false;
+    this.USE_MOCK = true;
 
     // Mock Database
     this._mockDB = {
@@ -220,11 +220,27 @@ export class ApiService {
         };
       }
 
+      if (username === "stu_1001" && password === "1234") {
+        return {
+          access_token: "mock_token_student_1001",
+          token_type: "bearer",
+          user: { username: "stu_1001", role: "student", id: 1001 },
+        };
+      }
+
       if (username === "prof1" && password === "1234") {
         return {
           access_token: "mock_token_prof",
           token_type: "bearer",
           user: { username: "prof1", role: "professor", id: 201 },
+        };
+      }
+
+      if (username === "p123456" && password === "1234") {
+        return {
+          access_token: "mock_token_prof_123456",
+          token_type: "bearer",
+          user: { username: "p123456", role: "professor", id: 123456 },
         };
       }
 

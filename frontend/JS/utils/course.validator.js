@@ -89,7 +89,7 @@ export class CourseValidator {
     } else if (formData.semester.length < 3) {
       errors.push({
         field: "course-semester",
-        message: "فرمت ترم صحیح نیست. مثال: 1403-1",
+        message: "فرمت ترم صحیح نیست. مثال: 1-1403",
       });
     }
 

@@ -40,6 +40,10 @@ export class StudentCourseView {
     }
   }
 
+  showLoading(isLoading) {
+    this.setLoading(isLoading);
+  }
+
   showError(message) {
     if (this.elements.errorMessage) {
       this.elements.errorMessage.textContent = message;

@@ -11,6 +11,16 @@ export class LoginView {
       submitBtn: document.querySelector(".login-btn"),
       errorElement: document.getElementById("login-error"),
     };
+    
+    // Set default values
+    this.setDefaultValues();
+  }
+  
+  setDefaultValues() {
+    // Set default student ID
+    if (this.elements.username) {
+      this.elements.username.placeholder = "مثال: stu_1001 یا p123456";
+    }
   }
 
   getFormData() {

@@ -70,7 +70,11 @@ export class StudentCourseController {
   }
 
   async loadData() {
-    this.view.showLoading(true);
+    if (this.view.showLoading) {
+      this.view.showLoading(true);
+    } else if (this.view.setLoading) {
+      this.view.setLoading(true);
+    }
     try {
       const [courses, prerequisites, enrollments, config] = await Promise.all([
         this.api.getCourses(),
@@ -98,7 +102,11 @@ export class StudentCourseController {
         "خطا در دریافت اطلاعات. لطفاً اتصال خود را بررسی کنید."
       );
     } finally {
-      this.view.showLoading(false);
+      if (this.view.showLoading) {
+        this.view.showLoading(false);
+      } else if (this.view.setLoading) {
+        this.view.setLoading(false);
+      }
     }
   }
 
@@ -174,7 +182,11 @@ export class StudentCourseController {
 
     if (!confirm(`آیا از اخذ درس "${course.name}" اطمینان دارید؟`)) return;
 
-    this.view.showLoading(true);
+    if (this.view.showLoading) {
+      this.view.showLoading(true);
+    } else if (this.view.setLoading) {
+      this.view.setLoading(true);
+    }
     try {
       await this.api.enrollCourse(courseId);
       await this.loadData();
@@ -184,7 +196,11 @@ export class StudentCourseController {
         msg = "تداخل زمانی، تکراری بودن درس یا محدودیت واحد.";
       this.view.showError(msg);
     } finally {
-      this.view.showLoading(false);
+      if (this.view.showLoading) {
+        this.view.showLoading(false);
+      } else if (this.view.setLoading) {
+        this.view.setLoading(false);
+      }
     }
   }
 
@@ -211,7 +227,11 @@ export class StudentCourseController {
 
     if (!confirm("آیا از حذف این درس اطمینان دارید؟")) return;
 
-    this.view.showLoading(true);
+    if (this.view.showLoading) {
+      this.view.showLoading(true);
+    } else if (this.view.setLoading) {
+      this.view.setLoading(true);
+    }
     try {
       await this.api.dropCourse(courseId);
 
@@ -227,7 +247,11 @@ export class StudentCourseController {
       if (msg.includes("409")) msg = "رعایت حداقل واحد الزامی است.";
       this.view.showError(msg);
     } finally {
-      this.view.showLoading(false);
+      if (this.view.showLoading) {
+        this.view.showLoading(false);
+      } else if (this.view.setLoading) {
+        this.view.setLoading(false);
+      }
     }
   }
 
