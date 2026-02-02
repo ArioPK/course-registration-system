@@ -1,8 +1,8 @@
 import { AuthService } from "./services/auth.service.js";
 import { ApiService } from "./services/api.service.js";
-import { StudentCourseView } from "./ui/student-course.view.js";
+import { StudentCourseView } from "./ui/views/student-course.view.js";
 import { StudentCourseController } from "./controllers/student-course.controller.js";
-import { StudentScheduleView } from "./ui/student-schedule.view.js";
+import { StudentScheduleView } from "./ui/views/student-schedule.view.js";
 import { StudentScheduleController } from "./controllers/student-schedule.controller.js";
 
 document.addEventListener("DOMContentLoaded", () => {
