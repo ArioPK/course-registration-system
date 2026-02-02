@@ -20,6 +20,17 @@ export class StudentScheduleView {
     };
   }
 
+  _formatTime(time) {
+    if (!time) return "";
+    // Handle both string and time object
+    if (typeof time === "string") {
+      return time.slice(0, 5);
+    }
+    // Handle time object from backend (HH:MM:SS format)
+    const timeStr = String(time);
+    return timeStr.slice(0, 5);
+  }
+
   renderSchedule(scheduleData) {
     this.scheduleContainer.innerHTML = "";
 
@@ -53,8 +64,8 @@ export class StudentScheduleView {
       );
 
       sortedBlocks.forEach((block) => {
-        const start = block.start_time.substring(0, 5);
-        const end = block.end_time.substring(0, 5);
+        const start = this._formatTime(block.start_time);
+        const end = this._formatTime(block.end_time);
 
         blocksHTML += `
                     <div class="schedule-block">

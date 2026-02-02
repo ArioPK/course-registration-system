@@ -76,31 +76,74 @@ export class StudentCourseController {
       this.view.setLoading(true);
     }
     try {
-      const [courses, prerequisites, enrollments, config] = await Promise.all([
-        this.api.getCourses(),
-        this.api.getPrerequisites(),
-        this.api.getMyEnrollments(),
-        this.api.getUnitConfiguration(),
-      ]);
+      // Load data with individual error handling to prevent one failure from breaking everything
+      let courses = [];
+      let prerequisites = [];
+      let enrollments = [];
+      let config = null;
 
+      try {
+        // Use student-specific endpoint
+        courses = await this.api.getStudentCourses();
+        console.log("Courses loaded:", courses);
+      } catch (error) {
+        console.error("Error loading courses:", error);
+        // Continue with empty array
+      }
+
+      try {
+        prerequisites = await this.api.getPrerequisites();
+        console.log("Prerequisites loaded:", prerequisites);
+      } catch (error) {
+        console.error("Error loading prerequisites:", error);
+        // Continue with empty array
+      }
+
+      try {
+        enrollments = await this.api.getMyEnrollments();
+        console.log("Enrollments loaded:", enrollments);
+      } catch (error) {
+        console.error("Error loading enrollments:", error);
+        // Continue with empty array
+      }
+
+      try {
+        config = await this.api.getUnitConfiguration();
+        console.log("Unit config loaded:", config);
+      } catch (error) {
+        console.error("Error loading unit config:", error);
+        // Continue with default config
+      }
+
+      // Ensure courses is an array
+      const coursesArray = Array.isArray(courses) ? courses : [];
+      const prerequisitesArray = Array.isArray(prerequisites) ? prerequisites : [];
+      const enrollmentsArray = Array.isArray(enrollments) ? enrollments : [];
+
+      // Use current term - backend uses 1404-1 by default
+      // This should match backend's CURRENT_TERM setting
       const currentSemester = "1404-1";
-      this.state.allCourses = courses.filter(
-        (c) => c.semester === currentSemester
+      this.state.allCourses = coursesArray.filter(
+        (c) => c && c.semester === currentSemester
       );
 
-      this.state.prerequisites = prerequisites;
-      this.state.myEnrollments = enrollments;
+      this.state.prerequisites = prerequisitesArray;
+      this.state.myEnrollments = enrollmentsArray;
 
       if (config) {
         this.state.unitConfig = config;
       }
 
-      this._filterAndRender();
+      // Only show error if courses failed to load
+      if (coursesArray.length === 0 && !this.api.USE_MOCK) {
+        this.view.showError("خطا در دریافت لیست دروس. لطفاً اتصال خود را بررسی کنید.");
+      } else {
+        this._filterAndRender();
+      }
     } catch (error) {
       console.error("StudentController Error:", error);
-      this.view.showError(
-        "خطا در دریافت اطلاعات. لطفاً اتصال خود را بررسی کنید."
-      );
+      const errorMessage = error?.message || "خطا در دریافت اطلاعات. لطفاً اتصال خود را بررسی کنید.";
+      this.view.showError(errorMessage);
     } finally {
       if (this.view.showLoading) {
         this.view.showLoading(false);
@@ -111,7 +154,7 @@ export class StudentCourseController {
   }
 
   _filterAndRender() {
-    const { allCourses, prerequisites, searchQuery, filterType, myEnrollments } = this.state;
+    const { allCourses, searchQuery, filterType, myEnrollments, prerequisites } = this.state;
     let filteredCourses = allCourses;
 
     if (searchQuery) {
@@ -131,11 +174,12 @@ export class StudentCourseController {
     const enrolledIds = new Set((myEnrollments || []).map((e) => e.course?.id).filter(Boolean));
     const prereqList = Array.isArray(prerequisites) ? prerequisites : [];
 
+    // Pass parameters in correct order: courses, prerequisites, onEnrollClick, enrolledIdsSet
     this.view.renderCourses(
       filteredCourses,
-      prereqList, // ✅ correct 2nd arg
-      (courseId) => this.handleEnroll(courseId), // ✅ correct 3rd arg
-      enrolledIds // ✅ correct 4th arg
+      prerequisites || [], 
+      (courseId) => this.handleEnroll(courseId), 
+      enrolledIds 
     );
   }
   showMyEnrollments() {
