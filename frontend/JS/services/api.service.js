@@ -301,10 +301,26 @@ export class ApiService {
 
     // --- REAL MODE ---
     try {
-      return await this._request("/api/student/enrollments", { method: "GET" });
+      console.log("Fetching enrollments from /api/student/enrollments");
+      const response = await this._request("/api/student/enrollments", { method: "GET" });
+      console.log("Enrollments response:", response);
+      
+      // Backend returns array of StudentEnrollmentItemRead
+      if (Array.isArray(response)) {
+        return response;
+      }
+      
+      // Fallback if wrapped in object
+      if (response && Array.isArray(response.enrollments)) {
+        return response.enrollments;
+      }
+      
+      return [];
     } catch (error) {
       console.error("Error fetching enrollments:", error);
-      throw error;
+      // Don't throw, return empty array so UI can still work
+      console.warn("Returning empty enrollments array due to error");
+      return [];
     }
   }
 
@@ -409,6 +425,10 @@ export class ApiService {
     }
   }
 
+  /**
+   * Gets all courses - used by ADMIN panel
+   * @returns {Promise<Array<Object>>} - An array of course objects.
+   */
   async getCourses() {
     // --- MOCK MODE ---
     if (this.USE_MOCK) {
@@ -418,12 +438,16 @@ export class ApiService {
     }
 
     // --- REAL MODE ---
-    // Note: This method is used by student panel, so we use student courses endpoint
+    // Admin endpoint - returns all courses
     try {
-      const response = await this._request("/api/student/courses", { method: "GET" });
+      console.log("Fetching courses from /api/courses (admin endpoint)");
+      const response = await this._request("/api/courses", { method: "GET" });
 
       if (response && typeof response === "object") {
-        if (Array.isArray(response)) return response;
+        if (Array.isArray(response)) {
+          console.log(`Received ${response.length} courses`);
+          return response;
+        }
         if (response.courses && Array.isArray(response.courses))
           return response.courses;
         if (response.data && Array.isArray(response.data)) return response.data;
@@ -437,7 +461,61 @@ export class ApiService {
       return [];
     } catch (error) {
       console.error("Error fetching courses:", error);
-      throw new Error(`خطا در دریافت دروس: ${error.message}`);
+      throw new Error(`خطا در دریافت دروس: ${error.message || "Unknown error"}`);
+    }
+  }
+
+  /**
+   * Gets student courses - used by STUDENT panel
+   * @returns {Promise<Array<Object>>} - An array of course objects available for enrollment.
+   */
+  async getStudentCourses() {
+    // --- MOCK MODE ---
+    if (this.USE_MOCK) {
+      console.warn("⚠️ API: Fetching student courses (MOCK mode)");
+      await new Promise((r) => setTimeout(r, 300));
+      return structuredClone(this._mockDB.courses);
+    }
+
+    // --- REAL MODE ---
+    // Student endpoint - returns courses available for enrollment
+    try {
+      console.log("Fetching courses from /api/student/courses");
+      const response = await this._request("/api/student/courses", { method: "GET" });
+      console.log("Student courses response:", response);
+
+      if (response && typeof response === "object") {
+        if (Array.isArray(response)) {
+          console.log(`Received ${response.length} student courses`);
+          return response;
+        }
+        if (response.courses && Array.isArray(response.courses)) {
+          console.log(`Received ${response.courses.length} courses from courses field`);
+          return response.courses;
+        }
+        if (response.data && Array.isArray(response.data)) {
+          console.log(`Received ${response.data.length} courses from data field`);
+          return response.data;
+        }
+        if (response.items && Array.isArray(response.items)) {
+          console.log(`Received ${response.items.length} courses from items field`);
+          return response.items;
+        }
+        if (response.results && Array.isArray(response.results)) {
+          console.log(`Received ${response.results.length} courses from results field`);
+          return response.results;
+        }
+      }
+
+      console.warn("فرمت پاسخ API ناشناخته است:", response);
+      return [];
+    } catch (error) {
+      console.error("Error fetching student courses:", error);
+      // Re-throw with more context
+      if (error.message) {
+        throw error;
+      }
+      throw new Error(`خطا در دریافت دروس: ${error.message || "Unknown error"}`);
     }
   }
 
@@ -535,13 +613,19 @@ export class ApiService {
 
     // --- REAL MODE (Assuming backend route is /api/settings/units) ---
     try {
+      console.log("Fetching unit configuration from /api/settings/units");
       const response = await this._request("/api/settings/units", {
         method: "GET",
       });
+      console.log("Unit config response:", response);
+      
       // Provide a default if backend returns empty/null
       return response || { min_units: 12, max_units: 20 };
     } catch (error) {
-      throw new Error(`خطا در دریافت تنظیمات واحد: ${error.message}`);
+      console.error("Error fetching unit configuration:", error);
+      // Don't throw, return default config so UI can still work
+      console.warn("Returning default unit config due to error");
+      return { min_units: 12, max_units: 20 };
     }
   }
 
@@ -585,12 +669,22 @@ export class ApiService {
 
     // --- REAL MODE (Assuming backend route is /api/prerequisites) ---
     try {
+      console.log("Fetching prerequisites from /api/prerequisites");
       const response = await this._request("/api/prerequisites", {
         method: "GET",
       });
+      console.log("Prerequisites response:", response);
+      
+      if (Array.isArray(response)) {
+        return response;
+      }
+      
       return response || [];
     } catch (error) {
-      throw new Error(`خطا در دریافت پیش‌نیازها: ${error.message}`);
+      console.error("Error fetching prerequisites:", error);
+      // Don't throw, return empty array so UI can still work
+      console.warn("Returning empty prerequisites array due to error");
+      return [];
     }
   }
 
