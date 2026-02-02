@@ -1,14 +1,92 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>داشبورد استاد</title>
-    <link rel="stylesheet" href="../css/variables.css">
-    <style>body { font-family: var(--font-family); background: var(--navy); color: var(--accent); padding: 50px; text-align: center; }</style>
-</head>
-<body>
-    <h1>خوش آمدید، استاد محترم</h1>
-    <p>مدیریت نمرات و دروس در اینجا قرار می‌گیرد.</p>
-    <button onclick="localStorage.clear(); sessionStorage.clear(); window.location.href='../Login/index.html'">خروج</button>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>پنل مدیریت اساتید </title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css"
+    />
+
+    <link rel="stylesheet" href="../CSS/variables.css" />
+    <link rel="stylesheet" href="professor.css" />
+  </head>
+  <body>
+    <div class="professor-container">
+      
+      <header class="page-header">
+        <div class="header-content">
+            <h1><i class="ri-briefcase-4-line"></i> پنل اساتید</h1>
+            <span class="user-welcome">خوش آمدید، استاد گرامی</span>
+        </div>
+        <button id="logout-btn" class="logout-btn">
+          <i class="ri-logout-box-r-line"></i> خروج
+        </button>
+      </header>
+
+      <main class="main-content">
+        
+        <div id="loading-spinner" class="loading-container hidden">
+          <div class="spinner"></div>
+          <p>در حال دریافت اطلاعات...</p>
+        </div>
+
+        <section id="courses-section">
+            <div class="section-title">
+                <h2>دروس ارائه شده توسط شما</h2>
+                <div class="divider"></div>
+            </div>
+            
+            <div id="professor-courses-grid" class="courses-grid">
+                </div>
+             <div id="empty-state" class="empty-state hidden">
+                <i class="ri-book-open-line"></i>
+                <p>شما هنوز درسی برای این ترم ارائه نکرده‌اید.</p>
+            </div>
+        </section>
+
+        <section id="students-section" class="hidden glass-panel">
+            <div class="panel-header">
+                <div class="course-detail-title">
+                    <i class="ri-group-line"></i>
+                    <h3>لیست دانشجویان: <span id="selected-course-name" class="highlight-text">...</span></h3>
+                </div>
+                <button id="back-to-courses-btn" class="back-btn">
+                    <i class="ri-arrow-right-line"></i> بازگشت به لیست دروس
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="students-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>نام و نام خانوادگی</th>
+                            <th>شماره دانشجویی</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="students-table-body">
+                        </tbody>
+                </table>
+            </div>
+             <div id="no-students-msg" class="empty-state-small hidden">
+                <p>هنوز دانشجویی در این درس ثبت‌نام نکرده است.</p>
+            </div>
+        </section>
+
+      </main>
+    </div>
+
+    <script type="module" src="professor.main.js"></script>
+  </body>
 </html>
