@@ -83,13 +83,18 @@ export class StudentCourseController {
         this.api.getUnitConfiguration(),
       ]);
 
+      // Ensure courses is an array
+      const coursesArray = Array.isArray(courses) ? courses : [];
+      const prerequisitesArray = Array.isArray(prerequisites) ? prerequisites : [];
+      const enrollmentsArray = Array.isArray(enrollments) ? enrollments : [];
+
       const currentSemester = "1403-1";
-      this.state.allCourses = courses.filter(
-        (c) => c.semester === currentSemester
+      this.state.allCourses = coursesArray.filter(
+        (c) => c && c.semester === currentSemester
       );
 
-      this.state.prerequisites = prerequisites;
-      this.state.myEnrollments = enrollments;
+      this.state.prerequisites = prerequisitesArray;
+      this.state.myEnrollments = enrollmentsArray;
 
       if (config) {
         this.state.unitConfig = config;
@@ -98,9 +103,8 @@ export class StudentCourseController {
       this._filterAndRender();
     } catch (error) {
       console.error("StudentController Error:", error);
-      this.view.showError(
-        "خطا در دریافت اطلاعات. لطفاً اتصال خود را بررسی کنید."
-      );
+      const errorMessage = error?.message || "خطا در دریافت اطلاعات. لطفاً اتصال خود را بررسی کنید.";
+      this.view.showError(errorMessage);
     } finally {
       if (this.view.showLoading) {
         this.view.showLoading(false);

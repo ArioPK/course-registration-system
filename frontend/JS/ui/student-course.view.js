@@ -67,6 +67,17 @@ export class StudentCourseView {
     return days[dayCode] || dayCode;
   }
 
+  _formatTime(time) {
+    if (!time) return "";
+    // Handle both string and time object
+    if (typeof time === "string") {
+      return time.slice(0, 5);
+    }
+    // Handle time object from backend (HH:MM:SS format)
+    const timeStr = String(time);
+    return timeStr.slice(0, 5);
+  }
+
   /**
    *
    * @param {Array} courses
@@ -134,10 +145,7 @@ export class StudentCourseView {
                       <i class="ri-time-line"></i>
                       <span>${this._translateDay(
                         course.day_of_week
-                      )} ${course.start_time.slice(
-        0,
-        5
-      )} - ${course.end_time.slice(0, 5)}</span>
+                      )} ${this._formatTime(course.start_time)} - ${this._formatTime(course.end_time)}</span>
                   </div>
                   <div class="info-row">
                       <i class="ri-map-pin-line"></i>
@@ -213,10 +221,7 @@ export class StudentCourseView {
             <td>${c.name}</td>
             <td>${c.units}</td>
             <td>${c.professor_name}</td>
-            <td>${this._translateDay(c.day_of_week)} ${c.start_time.slice(
-          0,
-          5
-        )}</td>
+            <td>${this._translateDay(c.day_of_week)} ${this._formatTime(c.start_time)}</td>
             <td>
                 <button class="btn-danger-small drop-btn">
                     <i class="ri-delete-bin-line"></i> حذف
