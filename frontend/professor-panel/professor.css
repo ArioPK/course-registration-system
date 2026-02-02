@@ -1,295 +1,316 @@
 /* frontend/professor-panel/professor.css */
 
-/* --- انیمیشن‌ها و تنظیمات پایه (مشابه student.css) --- */
+
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  body {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
-    color: var(--light-grey);
-    font-family: var(--font-family);
-    min-height: 100vh;
-    margin: 0;
-    padding: 30px;
-    overflow-x: hidden;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
   }
-  
-  /* --- هدر (مشابه student.css) --- */
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(15, 31, 67, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    padding: 20px 30px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    margin-bottom: 40px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    animation: fadeIn 0.6s ease-out;
+  100% {
+    transform: rotate(360deg);
   }
-  
-  .page-header h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--accent);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  
-  .user-welcome {
-      font-size: 0.9rem;
-      color: var(--medium-grey);
-      margin-right: 15px;
-      border-right: 1px solid rgba(255,255,255,0.1);
-      padding-right: 15px;
-  }
-  
-  /* --- گرید و کارت‌ها (دقیقاً کپی از student.css برای هماهنگی) --- */
-  .courses-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 25px;
-    padding-bottom: 40px;
-  }
-  
-  .course-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
-    padding: 25px;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    animation: fadeIn 0.6s ease-out backwards;
-    cursor: pointer; /* استاد می‌تواند کلیک کند */
-  }
-  
-  .course-card:hover {
-    transform: translateY(-8px) scale(1.02);
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(212, 175, 55, 0.3);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 15px rgba(212, 175, 55, 0.1);
-  }
-  
-  .course-card::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 4px;
-    background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    opacity: 0; transition: opacity 0.3s;
-  }
-  
-  .course-card:hover::before { opacity: 1; }
-  
-  .course-card h4 {
-      color: var(--light-grey);
-      font-size: 1.2rem;
-      margin-bottom: 15px;
-      margin-top: 10px;
-  }
-  
-  .course-info p {
-      color: var(--medium-grey);
-      font-size: 0.9rem;
-      margin: 5px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-  }
-  
-  .course-info i { color: var(--accent); }
-  
-  /* دکمه مدیریت روی کارت */
-  .manage-btn-card {
-      margin-top: 20px;
-      width: 100%;
-      padding: 10px;
-      background: rgba(212, 175, 55, 0.1);
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.3s;
-      font-family: var(--font-family);
-  }
-  
-  .manage-btn-card:hover {
-      background: var(--accent);
-      color: var(--navy);
-  }
-  
-  /* --- استایل‌های اختصاصی پنل مدیریت دانشجویان (Glass Table) --- */
-  .glass-panel {
-      background: rgba(15, 31, 67, 0.6);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      padding: 30px;
-      animation: fadeIn 0.4s ease-out;
-  }
-  
-  .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
-      padding-bottom: 15px;
-  }
-  
-  .highlight-text {
-      color: var(--accent);
-      font-weight: 700;
-  }
-  
-  .back-btn {
-      background: transparent;
-      border: 1px solid var(--medium-grey);
-      color: var(--light-grey);
-      padding: 8px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.3s;
-      font-family: var(--font-family);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-  }
-  
-  .back-btn:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-  }
-  
-  /* جدول */
-  .table-responsive {
-      overflow-x: auto;
-  }
-  
-  .students-table {
-      width: 100%;
-      border-collapse: collapse;
-      color: var(--light-grey);
-  }
-  
-  .students-table th, 
-  .students-table td {
-      padding: 15px;
-      text-align: right;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  }
-  
-  .students-table th {
-      color: var(--accent);
-      font-weight: 600;
-      font-size: 0.95rem;
-      white-space: nowrap;
-  }
-  
-  .students-table tr:hover {
-      background: rgba(255, 255, 255, 0.02);
-  }
-  
-  .students-table td {
-      font-size: 0.9rem;
-      color: var(--medium-grey);
-  }
-  
-  /* دکمه حذف قرمز */
-  .btn-danger-small {
-      background: rgba(229, 57, 53, 0.1);
-      border: 1px solid rgba(229, 57, 53, 0.3);
-      color: var(--danger-light);
-      padding: 6px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.3s;
-      font-family: var(--font-family);
-      font-size: 0.85rem;
-  }
-  
-  .btn-danger-small:hover {
-      background: var(--danger);
-      color: white;
-      box-shadow: 0 0 10px rgba(229, 57, 53, 0.4);
-  }
-  
-  /* --- عمومی --- */
-  .section-title {
-      margin-bottom: 25px;
-  }
-  .section-title h2 {
-      color: var(--light-grey);
-      font-size: 1.3rem;
-      margin-bottom: 10px;
-  }
-  .divider {
-      height: 2px;
-      width: 50px;
-      background: var(--accent);
-      border-radius: 2px;
-  }
-  
-  .hidden { display: none !important; }
-  
-  .logout-btn {
-      /* کپی از student.css */
-      background: rgba(229, 57, 53, 0.1);
-      border: 1px solid rgba(229, 57, 53, 0.3);
-      color: var(--danger-light);
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: var(--font-family);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: all 0.3s ease;
-  }
-  .logout-btn:hover {
-      background: var(--danger);
-      color: white;
-      transform: translateY(-2px);
-  }
-  
-  .loading-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 50px;
-  }
-  .spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(255,255,255,0.1);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 1s infinite linear;
-      margin-bottom: 15px;
-  }
-  
-  .empty-state, .empty-state-small {
-      text-align: center;
-      padding: 40px;
-      color: var(--medium-grey);
-      background: rgba(255,255,255,0.02);
-      border-radius: 12px;
-      border: 1px dashed rgba(255,255,255,0.1);
-  }
-  .empty-state i {
-      font-size: 3rem;
-      color: var(--navy-700);
-      margin-bottom: 10px;
-      display: block;
-  }
+}
+
+body {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%);
+  color: var(--light-grey);
+  font-family: var(--font-family);
+  min-height: 100vh;
+  margin: 0;
+  padding: 30px;
+  overflow-x: hidden;
+}
+
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 31, 67, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 20px 30px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.6s ease-out;
+}
+
+.page-header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-welcome {
+  font-size: 0.9rem;
+  color: var(--medium-grey);
+  margin-right: 15px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  padding-right: 15px;
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 25px;
+  padding-bottom: 40px;
+}
+
+.course-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 25px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: fadeIn 0.6s ease-out backwards;
+  cursor: pointer; /* استاد می‌تواند کلیک کند */
+}
+
+.course-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3), 0 0 15px rgba(212, 175, 55, 0.1);
+}
+
+.course-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.course-card:hover::before {
+  opacity: 1;
+}
+
+.course-card h4 {
+  color: var(--light-grey);
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  margin-top: 10px;
+}
+
+.course-info p {
+  color: var(--medium-grey);
+  font-size: 0.9rem;
+  margin: 5px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.course-info i {
+  color: var(--accent);
+}
+
+
+.manage-btn-card {
+  margin-top: 20px;
+  width: 100%;
+  padding: 10px;
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: var(--font-family);
+}
+
+.manage-btn-card:hover {
+  background: var(--accent);
+  color: var(--navy);
+}
+
+
+.glass-panel {
+  background: rgba(15, 31, 67, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 30px;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 15px;
+}
+
+.highlight-text {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid var(--medium-grey);
+  color: var(--light-grey);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: var(--font-family);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.back-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--light-grey);
+}
+
+.students-table th,
+.students-table td {
+  padding: 15px;
+  text-align: right;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.students-table th {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.students-table tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.students-table td {
+  font-size: 0.9rem;
+  color: var(--medium-grey);
+}
+
+
+.btn-danger-small {
+  background: rgba(229, 57, 53, 0.1);
+  border: 1px solid rgba(229, 57, 53, 0.3);
+  color: var(--danger-light);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-family: var(--font-family);
+  font-size: 0.85rem;
+}
+
+.btn-danger-small:hover {
+  background: var(--danger);
+  color: white;
+  box-shadow: 0 0 10px rgba(229, 57, 53, 0.4);
+}
+
+
+.section-title {
+  margin-bottom: 25px;
+}
+.section-title h2 {
+  color: var(--light-grey);
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+.divider {
+  height: 2px;
+  width: 50px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.logout-btn {
+ 
+  background: rgba(229, 57, 53, 0.1);
+  border: 1px solid rgba(229, 57, 53, 0.3);
+  color: var(--danger-light);
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-family);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+.logout-btn:hover {
+  background: var(--danger);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s infinite linear;
+  margin-bottom: 15px;
+}
+
+.empty-state,
+.empty-state-small {
+  text-align: center;
+  padding: 40px;
+  color: var(--medium-grey);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+.empty-state i {
+  font-size: 3rem;
+  color: var(--navy-700);
+  margin-bottom: 10px;
+  display: block;
+}
