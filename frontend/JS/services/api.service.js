@@ -255,6 +255,46 @@ export class ApiService {
    * Gets all courses from the API.
    * @returns {Promise<Array<Object>>} - An array of course objects.
    */
+
+  // --- Enrollment Methods ---
+
+  /**
+   */
+  async enrollCourse(courseId) {
+    try {
+      return await this._request("/api/student/enrollments", {
+        method: "POST",
+        body: JSON.stringify({ course_id: courseId }),
+      });
+    } catch (error) {
+      console.error("Error enrolling course:", error);
+      throw error;
+    }
+  }
+
+  /**
+   */
+  async getMyEnrollments() {
+    try {
+      return await this._request("/api/student/enrollments", { method: "GET" });
+    } catch (error) {
+      console.error("Error fetching enrollments:", error);
+      throw error;
+    }
+  }
+
+  /**
+   */
+  async dropCourse(courseId) {
+    try {
+      return await this._request(`/api/student/enrollments/${courseId}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Error dropping course:", error);
+      throw error;
+    }
+  }
   async getStudentSchedule() {
     try {
       return await this._request("/api/student/schedule", { method: "GET" });

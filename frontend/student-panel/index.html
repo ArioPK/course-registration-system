@@ -26,6 +26,12 @@
         <button id="logout-btn" class="logout-btn">
           <i class="ri-logout-box-r-line"></i> خروج
         </button>
+        <button id="my-enrollments-btn" class="action-btn">
+          <i class="ri-list-check"></i> دروس من
+        </button>
+        <button id="view-schedule-btn" class="action-btn">
+          <i class="ri-calendar-check-line"></i> برنامه هفتگی
+        </button>
       </header>
 
       <main class="main-content">
@@ -46,11 +52,6 @@
             </select>
           </div>
         </div>
-        <div class="header-actions">
-          <button id="view-schedule-btn" class="action-btn">
-              <i class="ri-calendar-check-line"></i> برنامه هفتگی
-          </button>
-      </div>
         <div id="loading-spinner" class="loading-container hidden">
           <div class="spinner"></div>
           <p>در حال دریافت لیست دروس...</p>
@@ -59,6 +60,61 @@
         <div id="error-message" class="error-box hidden"></div>
 
         <div id="courses-grid" class="courses-grid"></div>
+        <section id="schedule-section" class="hidden">
+          <div class="section-header">
+            <h2><i class="ri-calendar-2-line"></i> برنامه هفتگی ترم جاری</h2>
+            <button id="back-to-catalog-btn" class="btn-secondary">
+              <i class="ri-arrow-right-line"></i> بازگشت به لیست دروس
+            </button>
+          </div>
+
+          <div id="schedule-container" class="schedule-wrapper"></div>
+
+          <div id="no-schedule-msg" class="empty-state hidden">
+            <i class="ri-calendar-event-line"></i>
+            <p>هنوز کلاسی در برنامه هفتگی شما ثبت نشده است.</p>
+          </div>
+        </section>
+        <section id="enrollments-section" class="hidden">
+          <div class="section-header">
+            <h2><i class="ri-list-check"></i> دروس اخذ شده ترم جاری</h2>
+            <button id="back-from-enrollments-btn" class="btn-secondary">
+              <i class="ri-arrow-right-line"></i> بازگشت به لیست ارائه دروس
+            </button>
+          </div>
+
+          <div class="units-summary-card">
+            <div class="summary-item">
+              <span>تعداد دروس:</span>
+              <strong id="total-courses-count">0</strong>
+            </div>
+            <div class="summary-item">
+              <span>مجموع واحدها:</span>
+              <strong id="total-units-count">0</strong>
+            </div>
+          </div>
+
+          <div class="table-responsive glass-panel">
+            <table class="students-table">
+              <thead>
+                <tr>
+                  <th>کد درس</th>
+                  <th>نام درس</th>
+                  <th>واحد</th>
+                  <th>استاد</th>
+                  <th>زمان کلاس</th>
+                  <th>عملیات</th>
+                </tr>
+              </thead>
+              <tbody id="my-enrollments-body"></tbody>
+            </table>
+          </div>
+
+          <div id="no-enrollments-msg" class="empty-state hidden">
+            <i class="ri-shopping-cart-line"></i>
+            <p>شما هنوز درسی را اخذ نکرده‌اید.</p>
+          </div>
+        </section>
 
         <div id="empty-state" class="empty-state hidden">
           <i class="ri-book-open-line"></i>
