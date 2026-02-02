@@ -1,6 +1,6 @@
 /**
  * js/controllers/student-course.controller.js
- * Responsibility: Fetch data, Handle Filtering, Manage Enrollments.
+ * Responsibility: Fetch data, Handle Filtering, Manage Enrollments, Check Unit Limits.
  */
 export class StudentCourseController {
   constructor(apiService, authService, view) {
@@ -12,7 +12,8 @@ export class StudentCourseController {
     this.state = {
       allCourses: [],
       prerequisites: [],
-      myEnrollments: [], // اضافه شد: برای نگهداری دروس اخذ شده
+      myEnrollments: [],
+      unitConfig: { min_units: 12, max_units: 20 },
       searchQuery: "",
       filterType: "course_mix",
     };
@@ -71,10 +72,11 @@ export class StudentCourseController {
   async loadData() {
     this.view.showLoading(true);
     try {
-      const [courses, prerequisites, enrollments] = await Promise.all([
+      const [courses, prerequisites, enrollments, config] = await Promise.all([
         this.api.getCourses(),
         this.api.getPrerequisites(),
         this.api.getMyEnrollments(),
+        this.api.getUnitConfiguration(),
       ]);
 
       const currentSemester = "1403-1";
@@ -84,6 +86,10 @@ export class StudentCourseController {
 
       this.state.prerequisites = prerequisites;
       this.state.myEnrollments = enrollments;
+
+      if (config) {
+        this.state.unitConfig = config;
+      }
 
       this._filterAndRender();
     } catch (error) {
@@ -97,13 +103,7 @@ export class StudentCourseController {
   }
 
   _filterAndRender() {
-    const {
-      allCourses,
-      prerequisites,
-      searchQuery,
-      filterType,
-      myEnrollments,
-    } = this.state;
+    const { allCourses, searchQuery, filterType, myEnrollments } = this.state;
     let filteredCourses = allCourses;
 
     if (searchQuery) {
@@ -134,7 +134,7 @@ export class StudentCourseController {
   }
 
   showMyEnrollments() {
-    const { myEnrollments } = this.state;
+    const { myEnrollments, unitConfig } = this.state;
 
     const totalUnits = myEnrollments.reduce(
       (sum, item) => sum + (item.course.units || 0),
@@ -144,7 +144,8 @@ export class StudentCourseController {
     this.view.renderEnrollments(
       myEnrollments,
       totalUnits,
-      (courseId) => this.handleDrop(courseId) // Callback حذف درس
+      (courseId) => this.handleDrop(courseId),
+      unitConfig
     );
 
     this.view.toggleSection("enrollments");
@@ -155,17 +156,32 @@ export class StudentCourseController {
   }
 
   async handleEnroll(courseId) {
-    if (!confirm("آیا از اخذ این درس اطمینان دارید؟")) return;
+    const course = this.state.allCourses.find((c) => c.id === courseId);
+    if (!course) return;
+
+    const currentUnits = this.state.myEnrollments.reduce(
+      (sum, item) => sum + (item.course.units || 0),
+      0
+    );
+    const maxUnits = this.state.unitConfig.max_units;
+
+    if (currentUnits + course.units > maxUnits) {
+      this.view.showError(
+        `خطا: اخذ این درس باعث عبور از سقف مجاز (${maxUnits} واحد) می‌شود.`
+      );
+      return;
+    }
+
+    if (!confirm(`آیا از اخذ درس "${course.name}" اطمینان دارید؟`)) return;
 
     this.view.showLoading(true);
     try {
       await this.api.enrollCourse(courseId);
-
       await this.loadData();
     } catch (error) {
       let msg = error.message || "خطا در ثبت‌نام درس.";
       if (msg.includes("409"))
-        msg = "تداخل زمانی، تکراری بودن درس یا سقف واحد.";
+        msg = "تداخل زمانی، تکراری بودن درس یا محدودیت واحد.";
       this.view.showError(msg);
     } finally {
       this.view.showLoading(false);
@@ -173,18 +189,38 @@ export class StudentCourseController {
   }
 
   async handleDrop(courseId) {
+    // 1. پیدا کردن درس در لیست ثبت‌نامی‌ها
+    const enrollment = this.state.myEnrollments.find(
+      (e) => e.course.id === courseId
+    );
+    if (!enrollment) return;
+
+    const courseUnits = enrollment.course.units;
+    const currentUnits = this.state.myEnrollments.reduce(
+      (sum, item) => sum + (item.course.units || 0),
+      0
+    );
+    const minUnits = this.state.unitConfig.min_units;
+
+    if (currentUnits - courseUnits < minUnits) {
+      this.view.showError(
+        `خطا: حذف این درس باعث می‌شود مجموع واحدها کمتر از حد مجاز (${minUnits} واحد) شود.`
+      );
+      return;
+    }
+
     if (!confirm("آیا از حذف این درس اطمینان دارید؟")) return;
 
     this.view.showLoading(true);
     try {
       await this.api.dropCourse(courseId);
 
+      // آپدیت State و رفرش
       this.state.myEnrollments = this.state.myEnrollments.filter(
         (e) => e.course.id !== courseId
       );
 
       this.showMyEnrollments();
-
       this._filterAndRender();
     } catch (error) {
       let msg = error.message || "خطا در حذف درس.";
