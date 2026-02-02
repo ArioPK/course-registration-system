@@ -154,7 +154,7 @@ export class StudentCourseController {
   }
 
   _filterAndRender() {
-    const { allCourses, searchQuery, filterType, myEnrollments } = this.state;
+    const { allCourses, searchQuery, filterType, myEnrollments, prerequisites } = this.state;
     let filteredCourses = allCourses;
 
     if (searchQuery) {
@@ -177,10 +177,12 @@ export class StudentCourseController {
 
     const enrolledIds = new Set(myEnrollments.map((e) => e.course.id));
 
+    // Pass parameters in correct order: courses, prerequisites, onEnrollClick, enrolledIdsSet
     this.view.renderCourses(
       filteredCourses,
-      (courseId) => this.handleEnroll(courseId),
-      enrolledIds
+      prerequisites || [], // ✅ prerequisites array
+      (courseId) => this.handleEnroll(courseId), // ✅ enroll callback
+      enrolledIds // ✅ enrolled id set
     );
   }
 
