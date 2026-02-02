@@ -18,6 +18,15 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.2.0/remixicon.css"
     />
     <link rel="stylesheet" href="student.css" />
+    <script>
+      // Early auth check before page loads
+      (function() {
+        const token = sessionStorage.getItem('authToken');
+        if (!token) {
+          window.location.href = '../Login/index.html';
+        }
+      })();
+    </script>
   </head>
   <body>
     <div class="student-container">
@@ -123,6 +132,6 @@
       </main>
     </div>
 
-    <script type="module" src="../JS/utils/student.main.js"></script>
+    <script type="module" src="../JS/student.main.js"></script>
   </body>
 </html>
