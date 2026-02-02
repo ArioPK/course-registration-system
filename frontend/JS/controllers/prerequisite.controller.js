@@ -1,9 +1,9 @@
 /**
  * js/controllers/prerequisite.controller.js
- * مسئولیت: مدیریت منطق مربوط به پیش‌نیازها
+ 
  */
 export class PrerequisiteController {
-    // تغییر: دریافت courseRepo علاوه بر prereqRepo
+    
     constructor(prereqRepo, courseRepo, view) {
       this.prereqRepo = prereqRepo;
       this.courseRepo = courseRepo;

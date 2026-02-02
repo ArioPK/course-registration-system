@@ -259,6 +259,49 @@ export class ApiService {
    * @returns {Promise<Array<Object>>} - An array of course objects.
    */
 
+
+  // --- Professor Methods ---
+
+
+  async getProfessorCourses() {
+   
+    try {
+      return await this._request("/api/professor/courses", { method: "GET" });
+    } catch (error) {
+      console.error("Error fetching professor courses:", error);
+      throw error;
+    }
+  }
+
+
+  async getCourseStudents(courseId) {
+    try {
+      const response = await this._request(`/api/professor/courses/${courseId}/students`, {
+        method: "GET",
+      });
+    
+      return response.students || response;
+    } catch (error) {
+      console.error(`Error fetching students for course ${courseId}:`, error);
+      throw error;
+    }
+  }
+
+
+  async removeStudentFromCourse(courseId, studentId) {
+    try {
+      return await this._request(
+        `/api/professor/courses/${courseId}/students/${studentId}`,
+        {
+          method: "DELETE",
+        }
+      );
+    } catch (error) {
+      console.error(`Error removing student ${studentId} from course ${courseId}:`, error);
+      throw error;
+    }
+  }
+
   async getCourses() {
     // --- MOCK MODE ---
     if (this.USE_MOCK) {
@@ -470,6 +513,7 @@ async saveUnitConfiguration(configData) {
       this._mockDB.prerequisites.push(newPrereq);
       return newPrereq;
     }
+    
 
     // --- REAL MODE ---
     try {
@@ -504,3 +548,5 @@ async saveUnitConfiguration(configData) {
     }
   }
 }
+
+
