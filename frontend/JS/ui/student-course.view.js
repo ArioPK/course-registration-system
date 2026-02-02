@@ -107,49 +107,49 @@ export class StudentCourseView {
       card.className = "course-card";
 
       card.innerHTML = `
-             <div class="course-header">
-                <span class="course-code">${course.code}</span>
-                ${
-                  hasPrereq
-                    ? '<i class="ri-links-line" title="دارای پیش‌نیاز" style="color: var(--accent);"></i>'
-                    : ""
-                }
-             </div>
-             <div class="course-title">${course.name}</div>
-             
-             <div class="course-info">
-                 <div class="info-row">
-                     <i class="ri-user-voice-line"></i>
-                     <span>${course.professor_name}</span>
-                 </div>
-                 <div class="info-row">
-                     <i class="ri-file-list-3-line"></i>
-                     <span>${course.units} واحد</span>
-                 </div>
-                 <div class="info-row">
-                     <i class="ri-time-line"></i>
-                     <span>${this._translateDay(
-                       course.day_of_week
-                     )} ${course.start_time.slice(
+              <div class="course-header">
+                 <span class="course-code">${course.code}</span>
+                 ${
+                   hasPrereq
+                     ? '<i class="ri-links-line" title="دارای پیش‌نیاز" style="color: var(--accent);"></i>'
+                     : ""
+                 }
+              </div>
+              <div class="course-title">${course.name}</div>
+              
+              <div class="course-info">
+                  <div class="info-row">
+                      <i class="ri-user-voice-line"></i>
+                      <span>${course.professor_name}</span>
+                  </div>
+                  <div class="info-row">
+                      <i class="ri-file-list-3-line"></i>
+                      <span>${course.units} واحد</span>
+                  </div>
+                  <div class="info-row">
+                      <i class="ri-time-line"></i>
+                      <span>${this._translateDay(
+                        course.day_of_week
+                      )} ${course.start_time.slice(
         0,
         5
       )} - ${course.end_time.slice(0, 5)}</span>
-                 </div>
-                 <div class="info-row">
-                     <i class="ri-map-pin-line"></i>
-                     <span>${course.location}</span>
-                 </div>
-                 <div class="info-row" style="margin-top: 10px; color: ${
-                   isFull ? "var(--danger)" : "#4caf50"
-                 }">
-                     <i class="ri-group-line"></i>
-                     <span>ظرفیت: ${course.enrolled || 0} / ${
+                  </div>
+                  <div class="info-row">
+                      <i class="ri-map-pin-line"></i>
+                      <span>${course.location}</span>
+                  </div>
+                  <div class="info-row" style="margin-top: 10px; color: ${
+                    isFull ? "var(--danger)" : "#4caf50"
+                  }">
+                      <i class="ri-group-line"></i>
+                      <span>ظرفیت: ${course.enrolled || 0} / ${
         course.capacity
       }</span>
-                 </div>
-             </div>
-             ${btnHtml}
-           `;
+                  </div>
+              </div>
+              ${btnHtml}
+            `;
 
       if (!isEnrolled) {
         const btn = card.querySelector(".enroll-btn");
@@ -163,14 +163,34 @@ export class StudentCourseView {
   }
 
   /**
- 
+  
+   * @param {Array} enrollments
+   * @param {number} totalUnits
+   * @param {Function} onDropClick
+   * @param {Object} unitConfig 
    */
-  renderEnrollments(enrollments, totalUnits, onDropClick) {
+  renderEnrollments(enrollments, totalUnits, onDropClick, unitConfig) {
     if (!this.elements.enrollmentsBody) return;
 
     this.elements.enrollmentsBody.innerHTML = "";
-    if (this.elements.totalUnitsEl)
-      this.elements.totalUnitsEl.textContent = totalUnits;
+
+    if (this.elements.totalUnitsEl) {
+      let text = `${totalUnits}`;
+      if (unitConfig) {
+        text += ` (مجاز: ${unitConfig.min_units} تا ${unitConfig.max_units})`;
+
+        if (
+          totalUnits < unitConfig.min_units ||
+          totalUnits > unitConfig.max_units
+        ) {
+          this.elements.totalUnitsEl.style.color = "var(--danger)";
+        } else {
+          this.elements.totalUnitsEl.style.color = "var(--accent)";
+        }
+      }
+      this.elements.totalUnitsEl.textContent = text;
+    }
+
     if (this.elements.totalCoursesEl)
       this.elements.totalCoursesEl.textContent = enrollments.length;
 
@@ -211,7 +231,7 @@ export class StudentCourseView {
   }
 
   /**
-   
+  
    */
   toggleSection(sectionName) {
     if (this.elements.searchToolbar)
