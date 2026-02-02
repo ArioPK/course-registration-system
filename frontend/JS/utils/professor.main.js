@@ -3,7 +3,7 @@
  */
 import { AuthService } from "./services/auth.service.js";
 import { ApiService } from "./services/api.service.js";
-import { ProfessorCourseView } from "./ui/professor-course.view.js";
+import { ProfessorCourseView } from "./ui/views/professor-course.view.js";
 import { ProfessorCourseController } from "./controllers/professor-course.controller.js";
 
 document.addEventListener("DOMContentLoaded", () => {
