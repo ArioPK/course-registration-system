@@ -17,7 +17,7 @@ from backend.app.repositories.course_repository import (
     update_course,
     delete_course,
 )
-
+from backend.app.repositories import enrollment_repository
 
 def list_student_catalog_courses_service(
     db: Session,
@@ -40,30 +40,23 @@ class DuplicateCourseCodeError(Exception):
     """Raised when trying to create or update a course with a duplicate code."""
 
 
-def list_courses_service(
-    db: Session,
-    skip: int = 0,
-    limit: int = 100,
-) -> List[Course]:
-    """
-    Return a paginated list of courses.
-    This is a thin wrapper over the repository to keep the service API consistent.
-    """
-    return get_courses(db=db, skip=skip, limit=limit)
+def list_courses_service(db: Session, skip: int = 0, limit: int = 100) -> List[Course]:
+    courses = get_courses(db=db, skip=skip, limit=limit)
+
+    for c in courses:
+        c.enrolled = enrollment_repository.count_course_enrollments(db, c.id, c.semester)
+
+    return courses
 
 
 def get_course_service(db: Session, course_id: int) -> Course:
-    """
-    Return a single course by ID.
-
-    Raises:
-        CourseNotFoundError: if no course with the given ID exists.
-    """
     course = get_course_by_id(db=db, course_id=course_id)
     if course is None:
         raise CourseNotFoundError(f"Course with id={course_id} not found")
-    return course
 
+    course.enrolled = enrollment_repository.count_course_enrollments(db, course.id, course.semester)
+
+    return course
 
 def create_course_service(db: Session, course_in: CourseCreate) -> Course:
     """
