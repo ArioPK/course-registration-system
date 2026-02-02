@@ -101,7 +101,7 @@ export class ProfessorCourseView {
             `آیا از حذف دانشجو "${student.name}" از این درس اطمینان دارید؟`
           )
         ) {
-          onRemoveClick(student.id);
+          onRemoveClick(student.student_id);
         }
       });
 
