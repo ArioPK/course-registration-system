@@ -9,12 +9,26 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Initialize Services
   const authService = new AuthService();
   const apiService = new ApiService("http://localhost:8000");
+ 
+document.getElementById("logout-btn").addEventListener("click", () => authService.logout());
+
+document.getElementById("view-schedule-btn").addEventListener("click", () => {
+    document.getElementById("courses-grid").classList.add("hidden");
+    document.getElementById("schedule-section").classList.remove("hidden");
+});
 
   // 2. Auth Check
   if (!authService.isAuthenticated()) {
     authService.enforceAuth();
     return;
   }
+
+  const logoutBtn = document.getElementById("logout-btn");
+if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+        authService.logout();
+    });
+}
 
   const role = authService.getRole();
   if (role !== "student") {
